@@ -1262,7 +1262,7 @@ local camera = workspace.CurrentCamera
 
 local autoShoot = false
 
--- หา Murderer ที่อยู่ในจอ
+-- หา Murderer
 local function getMurdererTarget()
 
 	local closest = nil
@@ -1274,7 +1274,6 @@ local function getMurdererTarget()
 
 			local backpack = plr:FindFirstChild("Backpack")
 			local char = plr.Character
-
 			local isMurderer = false
 
 			if backpack and backpack:FindFirstChild("Knife") then
@@ -1347,15 +1346,6 @@ local function shootMurderer()
 
 end
 
--- LOOP
-RunService.RenderStepped:Connect(function()
-
-	if autoShoot then
-		shootMurderer()
-	end
-
-end)
-
 -- =========================
 -- ปุ่มเมนูหลัก
 -- =========================
@@ -1363,9 +1353,7 @@ end)
 MainTab:Button({
 Title="ออโต้ยิงฆาตกร(แบบกด)",
 Callback=function()
-
 	shootMurderer()
-
 end
 })
 
@@ -1373,15 +1361,12 @@ end
 -- ปุ่มลอย
 -- =========================
 
-local floatEnabled = false
 local floatGui = nil
 
 SettingsTab:Toggle({
 Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
 Default=false,
 Callback=function(state)
-
-	floatEnabled = state
 
 	if state then
 
@@ -1392,25 +1377,28 @@ Callback=function(state)
 		floatGui.ResetOnSpawn = false
 
 		local frame = Instance.new("Frame")
-		frame.Size = UDim2.new(0,120,0,45)
-		frame.Position = UDim2.new(0.4,0,0.7,0)
+		frame.Size = UDim2.new(0,200,0,200)
+		frame.Position = UDim2.new(0.4,0,0.6,0)
 		frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
 		frame.BorderColor3 = Color3.fromRGB(255,255,255)
 		frame.Active = true
 		frame.Draggable = true
 		frame.Parent = floatGui
 
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0,25)
+		corner.Parent = frame
+
 		local button = Instance.new("TextButton")
 		button.Size = UDim2.new(1,0,1,0)
 		button.Text = "ยิงฆาตกร"
+		button.TextScaled = true
 		button.TextColor3 = Color3.new(1,1,1)
 		button.BackgroundTransparency = 1
 		button.Parent = frame
 
 		button.MouseButton1Click:Connect(function()
-
 			shootMurderer()
-
 		end)
 
 	else
