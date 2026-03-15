@@ -1486,7 +1486,7 @@ end
 
 local touchKick = false
 
-TrollTab:Toggle({
+VisualsTab:Toggle({
 Title="เตะ",
 Default=false,
 Callback=function(state)
@@ -1528,7 +1528,7 @@ end)
 
 local flingAll = false
 
-TrollTab:Toggle({
+VisualsTab:Toggle({
 Title="เตะทุกคนในเซิฟ",
 Default=false,
 Callback=function(state)
