@@ -1423,7 +1423,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- =========================
--- FLING FUNCTION (ระบบเตะ)
+-- FLING FUNCTION
 -- =========================
 
 local function flingPlayer(target)
@@ -1441,7 +1441,6 @@ local function flingPlayer(target)
 	local oldPos = root.CFrame
 	local enabled = true
 
-	-- ฟิสิกส์เตะ
 	task.spawn(function()
 
 		while enabled do
@@ -1459,7 +1458,6 @@ local function flingPlayer(target)
 
 	end)
 
-	-- ติดตัว 2 วิ
 	local start = tick()
 
 	while tick() - start < 2 do
@@ -1546,8 +1544,10 @@ Callback=function(state)
 					if not flingAll then break end
 
 					if plr ~= player then
+
 						flingPlayer(plr)
 						task.wait(1)
+
 					end
 
 				end
