@@ -1414,16 +1414,22 @@ end
 })
 
 -- =========================
--- SERVICES
+-- SECTION (กวนตีนคนในเซิฟ)
 -- =========================
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
+local TrollSection = VisualsTab:Section({
+Title = "ระบบเตะ"
+})
 
 -- =========================
--- FLING FUNCTION
+-- VARIABLES
+-- =========================
+
+local touchKick = false
+local flingAll = false
+
+-- =========================
+-- FLING SYSTEM
 -- =========================
 
 local function flingPlayer(target)
@@ -1482,15 +1488,11 @@ end
 -- เตะเมื่อเดินชน
 -- =========================
 
-local touchKick = false
-
-VisualsTab:Toggle({
+TrollSection:Toggle({
 Title="เตะ",
 Default=false,
 Callback=function(state)
-
 	touchKick = state
-
 end
 })
 
@@ -1524,9 +1526,7 @@ end)
 -- เตะทุกคนในเซิฟ
 -- =========================
 
-local flingAll = false
-
-VisualsTab:Toggle({
+TrollSection:Toggle({
 Title="เตะทุกคนในเซิฟ",
 Default=false,
 Callback=function(state)
