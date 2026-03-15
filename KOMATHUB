@@ -1249,3 +1249,178 @@ Callback=function()
 
 end
 })
+
+-- =========================
+-- AUTO SHOOT MURDERER
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local autoShoot = false
+
+-- หา Murderer ที่อยู่ในจอ
+local function getMurdererTarget()
+
+	local closest = nil
+	local distance = math.huge
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local backpack = plr:FindFirstChild("Backpack")
+			local char = plr.Character
+
+			local isMurderer = false
+
+			if backpack and backpack:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if char and char:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if isMurderer then
+
+				local pos,visible =
+				camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+
+				if visible then
+
+					local dist =
+					(Vector2.new(pos.X,pos.Y)
+					-
+					Vector2.new(
+						camera.ViewportSize.X/2,
+						camera.ViewportSize.Y/2
+					)).Magnitude
+
+					if dist < distance then
+						distance = dist
+						closest = plr
+					end
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return closest
+end
+
+-- ยิง
+local function shootMurderer()
+
+	local char = player.Character
+	if not char then return end
+
+	local tool = char:FindFirstChild("Gun")
+	if not tool then return end
+
+	local remote = tool:FindFirstChild("Shoot")
+	if not remote then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local attachment = root:FindFirstChild("GunRaycastAttachment")
+	if not attachment then return end
+
+	local target = getMurdererTarget()
+	if not target then return end
+
+	local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetHRP then return end
+
+	remote:FireServer(
+		attachment.WorldCFrame,
+		CFrame.new(targetHRP.Position)
+	)
+
+end
+
+-- LOOP
+RunService.RenderStepped:Connect(function()
+
+	if autoShoot then
+		shootMurderer()
+	end
+
+end)
+
+-- =========================
+-- ปุ่มเมนูหลัก
+-- =========================
+
+MainTab:Button({
+Title="ออโต้ยิงฆาตกร(แบบกด)",
+Callback=function()
+
+	shootMurderer()
+
+end
+})
+
+-- =========================
+-- ปุ่มลอย
+-- =========================
+
+local floatEnabled = false
+local floatGui = nil
+
+SettingsTab:Toggle({
+Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
+Default=false,
+Callback=function(state)
+
+	floatEnabled = state
+
+	if state then
+
+		if floatGui then floatGui:Destroy() end
+
+		floatGui = Instance.new("ScreenGui")
+		floatGui.Parent = player.PlayerGui
+		floatGui.ResetOnSpawn = false
+
+		local frame = Instance.new("Frame")
+		frame.Size = UDim2.new(0,120,0,45)
+		frame.Position = UDim2.new(0.4,0,0.7,0)
+		frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		frame.BorderColor3 = Color3.fromRGB(255,255,255)
+		frame.Active = true
+		frame.Draggable = true
+		frame.Parent = floatGui
+
+		local button = Instance.new("TextButton")
+		button.Size = UDim2.new(1,0,1,0)
+		button.Text = "ยิงฆาตกร"
+		button.TextColor3 = Color3.new(1,1,1)
+		button.BackgroundTransparency = 1
+		button.Parent = frame
+
+		button.MouseButton1Click:Connect(function()
+
+			shootMurderer()
+
+		end)
+
+	else
+
+		if floatGui then
+			floatGui:Destroy()
+			floatGui = nil
+		end
+
+	end
+
+end
+})
