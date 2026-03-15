@@ -1412,3 +1412,151 @@ Callback=function(state)
 
 end
 })
+
+-- =========================
+-- SERVICES
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+-- =========================
+-- FLING FUNCTION (ระบบเตะ)
+-- =========================
+
+local function flingPlayer(target)
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	if not target.Character then return end
+	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return end
+
+	local oldPos = root.CFrame
+	local enabled = true
+
+	-- ฟิสิกส์เตะ
+	task.spawn(function()
+
+		while enabled do
+
+			RunService.Heartbeat:Wait()
+
+			local vel = root.Velocity
+			root.Velocity = vel * 8000 + Vector3.new(0,8000,0)
+
+			RunService.RenderStepped:Wait()
+
+			root.Velocity = vel
+
+		end
+
+	end)
+
+	-- ติดตัว 2 วิ
+	local start = tick()
+
+	while tick() - start < 2 do
+
+		if targetRoot then
+
+			root.CFrame = targetRoot.CFrame
+			root.Velocity = (targetRoot.Position - root.Position).Unit * 150
+
+		end
+
+		RunService.Heartbeat:Wait()
+
+	end
+
+	enabled = false
+	root.CFrame = oldPos
+
+end
+
+-- =========================
+-- เตะเมื่อเดินชน
+-- =========================
+
+local touchKick = false
+
+TrollTab:Toggle({
+Title="เตะ",
+Default=false,
+Callback=function(state)
+
+	touchKick = state
+
+end
+})
+
+RunService.Heartbeat:Connect(function()
+
+	if not touchKick then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local dist = (root.Position - plr.Character.HumanoidRootPart.Position).Magnitude
+
+			if dist < 3 then
+				flingPlayer(plr)
+			end
+
+		end
+
+	end
+
+end)
+
+-- =========================
+-- เตะทุกคนในเซิฟ
+-- =========================
+
+local flingAll = false
+
+TrollTab:Toggle({
+Title="เตะทุกคนในเซิฟ",
+Default=false,
+Callback=function(state)
+
+	flingAll = state
+
+	if state then
+
+		task.spawn(function()
+
+			while flingAll do
+
+				for _,plr in pairs(Players:GetPlayers()) do
+
+					if not flingAll then break end
+
+					if plr ~= player then
+						flingPlayer(plr)
+						task.wait(1)
+					end
+
+				end
+
+			end
+
+		end)
+
+	end
+
+end
+})
