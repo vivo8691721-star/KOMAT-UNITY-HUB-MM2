@@ -1560,3 +1560,98 @@ Callback=function(state)
 
 end
 })
+
+-- =========================
+-- SECTION การเคลื่อนไหว
+-- =========================
+
+local MoveSection = SettingsTab:Section({
+Title = "การเคลื่อนไหว"
+})
+
+-- =========================
+-- VARIABLES
+-- =========================
+
+local walkSpeed = 16
+local jumpPower = 50
+local infJump = false
+
+-- =========================
+-- ปรับความเร็ว
+-- =========================
+
+MoveSection:Slider({
+Title = "ความเร็ว",
+Step = 1,
+Value = {
+Min = 16,
+Max = 200,
+Default = 16
+},
+Callback = function(value)
+
+	walkSpeed = value
+
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.WalkSpeed = walkSpeed
+	end
+
+end
+})
+
+-- =========================
+-- ปรับกระโดดสูง
+-- =========================
+
+MoveSection:Slider({
+Title = "ความสูงกระโดด",
+Step = 1,
+Value = {
+Min = 50,
+Max = 200,
+Default = 50
+},
+Callback = function(value)
+
+	jumpPower = value
+
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.JumpPower = jumpPower
+	end
+
+end
+})
+
+-- =========================
+-- กระโดดไม่จำกัด
+-- =========================
+
+MoveSection:Toggle({
+Title = "กระโดดไม่จำกัด",
+Default = false,
+Callback = function(state)
+
+	infJump = state
+
+end
+})
+
+-- =========================
+-- INFINITE JUMP SYSTEM
+-- =========================
+
+local UIS = game:GetService("UserInputService")
+
+UIS.JumpRequest:Connect(function()
+
+	if infJump then
+
+		local char = player.Character
+		if char and char:FindFirstChild("Humanoid") then
+			char.Humanoid:ChangeState("Jumping")
+		end
+
+	end
+
+end)
