@@ -1011,59 +1011,77 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- =========================
--- STRONG FLING SYSTEM
+-- WALK FLING + SPIN SYSTEM
 -- =========================
 
-local function strongFling(target)
-
-	if not target or not target.Character then return end
+local function walkFling(target)
 
 	local char = player.Character
 	if not char then return end
 
 	local root = char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChild("Humanoid")
+	if not root or not hum then return end
+
+	if not target.Character then return end
 	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetRoot then return end
 
-	if not root or not targetRoot then return end
-
+	-- จำตำแหน่งเดิม
 	local oldPos = root.CFrame
 
+	-- กล้อง
 	local cam = workspace.CurrentCamera
 	local oldSubject = cam.CameraSubject
-
-	-- กล้องไปมองเป้าหมาย
 	local targetHum = target.Character:FindFirstChildOfClass("Humanoid")
+
 	if targetHum then
 		cam.CameraSubject = targetHum
 	end
 
-	hum.Sit = false
+	local enabled = true
 
+	-- 🌪 หมุนเตะ
 	local spin = Instance.new("BodyAngularVelocity")
 	spin.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
-	spin.AngularVelocity = Vector3.new(0,999999,0)
+	spin.AngularVelocity = Vector3.new(0,99999,0)
 	spin.P = math.huge
 	spin.Parent = root
 
-	local vel = Instance.new("BodyVelocity")
-	vel.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
-	vel.Velocity = Vector3.new(0,0,0)
-	vel.Parent = root
+	-- 💥 ระบบ fling เดิม
+	task.spawn(function()
 
+		while enabled do
+
+			RunService.Heartbeat:Wait()
+
+			local vel = root.Velocity
+			root.Velocity = vel * 8000 + Vector3.new(0,8000,0)
+
+			RunService.RenderStepped:Wait()
+
+			root.Velocity = vel
+
+		end
+
+	end)
+
+	-- ติดตัว + เดินชน
 	local start = tick()
 
 	while tick() - start < 2 do
 
-		if targetRoot and targetRoot.Parent then
+		if targetRoot then
 
-			local dir = (targetRoot.Position - root.Position).Unit
+			local offset = Vector3.new(
+				math.random(-2,2),
+				0,
+				math.random(-2,2)
+			)
 
-			-- เข้าไปอยู่ในตัวเป้าหมาย
-			root.CFrame = targetRoot.CFrame
+			root.CFrame = targetRoot.CFrame * CFrame.new(offset)
 
-			-- พุ่งชน
-			vel.Velocity = dir * 400
+			root.Velocity = (targetRoot.Position - root.Position).Unit * 120
 
 		end
 
@@ -1071,8 +1089,9 @@ local function strongFling(target)
 
 	end
 
+	enabled = false
+
 	spin:Destroy()
-	vel:Destroy()
 
 	root.Velocity = Vector3.zero
 	root.RotVelocity = Vector3.zero
@@ -1201,7 +1220,7 @@ Callback=function()
 	local sheriff = findSheriff()
 
 	if sheriff then
-		strongFling(sheriff)
+		walkFling(sheriff)
 	end
 
 end
@@ -1214,7 +1233,7 @@ Callback=function()
 	local murderer = findMurderer()
 
 	if murderer then
-		strongFling(murderer)
+		walkFling(murderer)
 	end
 
 end
@@ -1225,7 +1244,7 @@ Title="กระเด็นคนที่เลือก",
 Callback=function()
 
 	if selectedPlayer then
-		strongFling(selectedPlayer)
+		walkFling(selectedPlayer)
 	end
 
 end
