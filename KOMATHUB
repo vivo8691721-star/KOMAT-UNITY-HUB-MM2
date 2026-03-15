@@ -1022,18 +1022,25 @@ local function strongFling(target)
 	if not char then return end
 
 	local root = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChild("Humanoid")
 	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
 
 	if not root or not targetRoot then return end
 
 	local oldPos = root.CFrame
 
-	-- ฟิสิกส์หมุน
+	hum.Sit = false
+
 	local spin = Instance.new("BodyAngularVelocity")
 	spin.MaxTorque = Vector3.new(math.huge,math.huge,math.huge)
-	spin.AngularVelocity = Vector3.new(50000,50000,50000)
-	spin.P = 1250
+	spin.AngularVelocity = Vector3.new(0,999999,0)
+	spin.P = math.huge
 	spin.Parent = root
+
+	local vel = Instance.new("BodyVelocity")
+	vel.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+	vel.Velocity = Vector3.new(0,0,0)
+	vel.Parent = root
 
 	local start = tick()
 
@@ -1041,13 +1048,11 @@ local function strongFling(target)
 
 		if targetRoot and targetRoot.Parent then
 
-			root.CFrame =
-				targetRoot.CFrame *
-				CFrame.new(
-					math.random(-1,1),
-					math.random(-1,1),
-					math.random(-1,1)
-				)
+			local dir = (targetRoot.Position - root.Position).Unit
+
+			root.CFrame = targetRoot.CFrame * CFrame.new(0,0,2)
+
+			vel.Velocity = dir * 400
 
 		end
 
@@ -1055,10 +1060,8 @@ local function strongFling(target)
 
 	end
 
-	-- หยุดแรงหมุนก่อน
-	spin.AngularVelocity = Vector3.new(0,0,0)
-	spin.MaxTorque = Vector3.new(0,0,0)
 	spin:Destroy()
+	vel:Destroy()
 
 	root.Velocity = Vector3.zero
 	root.RotVelocity = Vector3.zero
@@ -1114,7 +1117,7 @@ local function findMurderer()
 end
 
 -- =========================
--- PLAYER SELECT SYSTEM
+-- PLAYER SELECT
 -- =========================
 
 local selectedPlayer = nil
