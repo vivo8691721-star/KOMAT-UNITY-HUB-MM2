@@ -62,9 +62,9 @@ Title="กวนตีนคนในเซิฟ",
 Icon="skull"
 })
 
-local ExtraTab = Window:Tab({
-Title="อีเว้นท์",
-Icon="sparkles"
+local FPSTab = Window:Tab({
+Title="หมวดหมู่ฆาตกร",
+Icon="knife"
 })
 
 local FPSTab = Window:Tab({
