@@ -1029,6 +1029,15 @@ local function strongFling(target)
 
 	local oldPos = root.CFrame
 
+	local cam = workspace.CurrentCamera
+	local oldSubject = cam.CameraSubject
+
+	-- กล้องไปมองเป้าหมาย
+	local targetHum = target.Character:FindFirstChildOfClass("Humanoid")
+	if targetHum then
+		cam.CameraSubject = targetHum
+	end
+
 	hum.Sit = false
 
 	local spin = Instance.new("BodyAngularVelocity")
@@ -1050,8 +1059,10 @@ local function strongFling(target)
 
 			local dir = (targetRoot.Position - root.Position).Unit
 
-			root.CFrame = targetRoot.CFrame * CFrame.new(0,0,2)
+			-- เข้าไปอยู่ในตัวเป้าหมาย
+			root.CFrame = targetRoot.CFrame
 
+			-- พุ่งชน
 			vel.Velocity = dir * 400
 
 		end
@@ -1068,6 +1079,10 @@ local function strongFling(target)
 
 	RunService.Heartbeat:Wait()
 
+	-- กล้องกลับ
+	cam.CameraSubject = oldSubject
+
+	-- กลับตำแหน่งเดิม
 	root.CFrame = oldPos
 
 end
