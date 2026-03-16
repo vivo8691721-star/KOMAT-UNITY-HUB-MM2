@@ -1713,3 +1713,88 @@ Callback = function()
 
 end
 })
+
+-- =========================
+-- SECTION เสกไอเทม
+-- =========================
+
+local SpawnItemSection = SettingsTab:Section({
+Title = "เสกไอเทม"
+})
+
+local selectedItem = nil
+local itemList = {}
+
+-- =========================
+-- สแกน Tool ทั้งเกม
+-- =========================
+
+local function scanTools()
+
+	itemList = {}
+
+	for _,v in pairs(game:GetDescendants()) do
+		if v:IsA("Tool") then
+			table.insert(itemList, v.Name)
+		end
+	end
+
+	table.sort(itemList)
+
+end
+
+scanTools()
+
+-- =========================
+-- Dropdown เลือกไอเทม
+-- =========================
+
+local ItemDropdown = SpawnItemSection:Dropdown({
+Title = "เลือกไอเทม",
+Values = itemList,
+Multi = false,
+AllowNone = true,
+Callback = function(value)
+	selectedItem = value
+end
+})
+
+-- =========================
+-- ปุ่มสแกนใหม่
+-- =========================
+
+SpawnItemSection:Button({
+Title = "สแกนไอเทมในแมพ",
+Callback = function()
+
+	scanTools()
+
+	ItemDropdown:Refresh(itemList)
+
+end
+})
+
+-- =========================
+-- ปุ่มเสก
+-- =========================
+
+SpawnItemSection:Button({
+Title = "เสกไอเทม(ของปลอม)",
+Callback = function()
+
+	if not selectedItem then return end
+
+	for _,v in pairs(game:GetDescendants()) do
+
+		if v:IsA("Tool") and v.Name == selectedItem then
+
+			local clone = v:Clone()
+			clone.Parent = player.Backpack
+			break
+
+		end
+
+	end
+
+end
+})
