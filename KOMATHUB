@@ -836,23 +836,33 @@ local function getNearestCoin(root)
 
 local nearest
 local dist = math.huge
+local foundVisibleCoin = false
 
 for _,v in pairs(workspace:GetDescendants()) do
 
-if v.Name=="Coin_Server" and v:IsA("BasePart") and not collectedCoins[v] then    
+	if v.Name=="Coin_Server"
+	and v:IsA("BasePart")
+	and not collectedCoins[v]
+	and v.Transparency == 0 then    
 
-	local d = (root.Position - v.Position).Magnitude    
+		foundVisibleCoin = true    
 
-	if d < dist then    
-		dist = d    
-		nearest = v    
-	end    
+		local d = (root.Position - v.Position).Magnitude    
+
+		if d < dist then    
+			dist = d    
+			nearest = v    
+		end    
+
+	end
 
 end
 
+if not foundVisibleCoin then
+return nil,true
 end
 
-return nearest
+return nearest,false
 
 end
 
@@ -870,21 +880,29 @@ hum.PlatformStand = true
 
 while flying and char.Parent and targetPart.Parent do
 
-local dir = (targetPart.Position - hrp.Position).Unit    
+	local targetPos = targetPart.Position    
 
-hrp.AssemblyLinearVelocity = dir * flySpeed    
+	if flyMode == "นอนคว่ำ" then    
+		targetPos = targetPart.Position - Vector3.new(0,3,0)    
+	end    
 
-if flyMode == "นอนคว่ำ" then    
-	hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position) * CFrame.Angles(math.rad(90),0,0)    
-else    
-	hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)    
-end    
+	local dir = (targetPos - hrp.Position).Unit    
 
-if (hrp.Position - targetPart.Position).Magnitude < 2 then    
-	break    
-end    
+	hrp.AssemblyLinearVelocity = dir * flySpeed    
 
-RunService.RenderStepped:Wait()
+	if flyMode == "นอนคว่ำ" then    
+		hrp.CFrame =    
+			CFrame.new(hrp.Position,targetPart.Position)    
+			* CFrame.Angles(math.rad(90),0,0)    
+	else    
+		hrp.CFrame = CFrame.new(hrp.Position,targetPart.Position)    
+	end    
+
+	if (hrp.Position - targetPos).Magnitude < 2 then    
+		break    
+	end    
+
+	RunService.RenderStepped:Wait()
 
 end
 
@@ -924,7 +942,7 @@ while flying do
 	local char = getChar()    
 	local root = char:WaitForChild("HumanoidRootPart")    
 
-	local coin = getNearestCoin(root)    
+	local coin,noVisibleCoins = getNearestCoin(root)    
 
 	if coin then    
 
@@ -932,15 +950,20 @@ while flying do
 
 	else    
 
-		if autoReset and startedCollecting then    
+		if noVisibleCoins then    
 
-			if char then    
+			if autoReset then    
+
 				char:BreakJoints()    
+
+			else    
+
+				flying = false    
+				restore()    
+
 			end    
 
-			task.wait(2)    
-
-			startedCollecting = false    
+			break    
 
 		end    
 
