@@ -1922,3 +1922,226 @@ RunService.RenderStepped:Connect(function()
 	end
 
 end)
+
+-- =========================
+-- AUTO SHOOT MURDERER
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local autoShoot = false
+local floatingShootButton = nil
+
+-- หา Murderer ที่อยู่ในจอ
+local function getMurdererTarget()
+
+	local closest = nil
+	local distance = math.huge
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local backpack = plr:FindFirstChild("Backpack")
+			local char = plr.Character
+
+			local isMurderer = false
+
+			if backpack and backpack:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if char and char:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if isMurderer then
+
+				local pos,visible =
+				camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+
+				if visible then
+
+					local dist =
+					(Vector2.new(pos.X,pos.Y)
+					-
+					Vector2.new(
+						camera.ViewportSize.X/2,
+						camera.ViewportSize.Y/2
+					)).Magnitude
+
+					if dist < distance then
+						distance = dist
+						closest = plr
+					end
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return closest
+end
+
+
+-- ยิง
+local function shootMurderer()
+
+	local char = player.Character
+	if not char then return end
+
+	local tool = char:FindFirstChild("Gun")
+	if not tool then return end
+
+	local remote = tool:FindFirstChild("Shoot")
+	if not remote then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local attachment = root:FindFirstChild("GunRaycastAttachment")
+	if not attachment then return end
+
+	local target = getMurdererTarget()
+	if not target then return end
+
+	local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetHRP then return end
+
+	remote:FireServer(
+		attachment.WorldCFrame,
+		CFrame.new(targetHRP.Position)
+	)
+
+end
+
+
+-- LOOP ยิงออโต้
+RunService.RenderStepped:Connect(function()
+
+	if autoShoot then
+		shootMurderer()
+	end
+
+end)
+
+
+-- =========================
+-- ปุ่มเมนูหลัก
+-- =========================
+
+SettingsTab:Button({
+Title="ออโต้ยิงฆาตกร(แบบกด)",
+Callback=function()
+
+	shootMurderer()
+
+end
+})
+
+
+-- =========================
+-- สร้างปุ่มลอย
+-- =========================
+
+local function createFloatingShootButton()
+
+	local FloatingGui = Instance.new("ScreenGui")
+	FloatingGui.Parent = player.PlayerGui
+	FloatingGui.ResetOnSpawn = false
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,140,0,52)
+	btn.Position = UDim2.new(0.5,-70,0.87,0)
+	btn.AnchorPoint = Vector2.new(0.5,0)
+	btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+	btn.BackgroundTransparency = 0.35
+	btn.TextColor3 = Color3.fromRGB(0,70,150)
+	btn.Text = "ยิงฆาตกร"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.Parent = FloatingGui
+	btn.Active = true
+	btn.Draggable = true
+
+	local corner = Instance.new("UICorner", btn)
+	corner.CornerRadius = UDim.new(0,18)
+
+	local stroke = Instance.new("UIStroke", btn)
+	stroke.Thickness = 2.5
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Color = Color3.fromRGB(0,120,255)
+
+	-- ไล่สีขอบ
+	task.spawn(function()
+		while btn.Parent do
+
+			TweenService:Create(
+				stroke,
+				TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+				{Color = Color3.fromRGB(0,80,255)}
+			):Play()
+
+			task.wait(0.8)
+
+			TweenService:Create(
+				stroke,
+				TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+				{Color = Color3.fromRGB(160,230,255)}
+			):Play()
+
+			task.wait(0.8)
+
+		end
+	end)
+
+	btn.MouseButton1Click:Connect(function()
+
+		shootMurderer()
+
+	end)
+
+	floatingShootButton = FloatingGui
+
+end
+
+
+-- =========================
+-- ลบปุ่มลอย
+-- =========================
+
+local function removeFloatingShootButton()
+
+	if floatingShootButton then
+		floatingShootButton:Destroy()
+		floatingShootButton = nil
+	end
+
+end
+
+
+-- =========================
+-- Toggle ปุ่มลอย
+-- =========================
+
+SettingsTab:Toggle({
+Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
+Default=false,
+Callback=function(state)
+
+	if state then
+		createFloatingShootButton()
+	else
+		removeFloatingShootButton()
+	end
+
+end
+})
