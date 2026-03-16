@@ -1735,7 +1735,7 @@ local function scanTools()
 
 	for _,v in pairs(game:GetDescendants()) do
 		if v:IsA("Tool") then
-			table.insert(itemList, v.Name)
+			table.insert(itemList,v.Name)
 		end
 	end
 
@@ -1760,22 +1760,21 @@ end
 })
 
 -- =========================
--- ปุ่มสแกนใหม่
+-- ปุ่มสแกนไอเทม
 -- =========================
 
 SpawnItemSection:Button({
-Title = "สแกนไอเทมในแมพ",
+Title = "สแกนไอเทมในเกม",
 Callback = function()
 
 	scanTools()
-
 	ItemDropdown:Refresh(itemList)
 
 end
 })
 
 -- =========================
--- ปุ่มเสก
+-- ปุ่มเสกไอเทม
 -- =========================
 
 SpawnItemSection:Button({
@@ -1785,7 +1784,6 @@ Callback = function()
 	if not selectedItem then return end
 
 	for _,v in pairs(game:GetDescendants()) do
-
 		if v:IsA("Tool") and v.Name == selectedItem then
 
 			local clone = v:Clone()
@@ -1793,7 +1791,6 @@ Callback = function()
 			break
 
 		end
-
 	end
 
 end
