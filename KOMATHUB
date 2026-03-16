@@ -1410,7 +1410,7 @@ end
 -- ปุ่มเมนูหลัก
 -- =========================
 
-MainTab:Button({
+SettingsTab:Button({
 Title="ออโต้ยิงฆาตกร(แบบกด)",
 Callback=function()
 	shootMurderer()
@@ -1424,6 +1424,7 @@ end
 local TweenService = game:GetService("TweenService")
 
 local floatGui = nil
+local floatLoop = false
 
 SettingsTab:Toggle({
 Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
@@ -1432,11 +1433,14 @@ Callback=function(state)
 
 	if state then
 
-		if floatGui then floatGui:Destroy() end
+		if floatGui then
+			floatGui:Destroy()
+		end
 
 		floatGui = Instance.new("ScreenGui")
-		floatGui.Parent = player.PlayerGui
+		floatGui.Name = "ShootMurdererFloat"
 		floatGui.ResetOnSpawn = false
+		floatGui.Parent = player.PlayerGui
 
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(0,140,0,52)
@@ -1448,53 +1452,55 @@ Callback=function(state)
 		btn.Text = "ยิงฆาตกร"
 		btn.Font = Enum.Font.GothamBold
 		btn.TextSize = 14
-		btn.Parent = floatGui
 		btn.Active = true
 		btn.Draggable = true
+		btn.Parent = floatGui
 
-		-- มุมโค้ง
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0,18)
 		corner.Parent = btn
 
-		-- ขอบปุ่ม
 		local stroke = Instance.new("UIStroke")
 		stroke.Thickness = 2.5
 		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		stroke.Color = Color3.fromRGB(0,120,255)
 		stroke.Parent = btn
 
-		-- เอฟเฟกต์ไล่สีขอบ
+		floatLoop = true
+
 		task.spawn(function()
 
-			while btn.Parent do
+			while floatLoop and btn.Parent do
 
-				TweenService:Create(
+				local t1 = TweenService:Create(
 					stroke,
 					TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
 					{Color = Color3.fromRGB(0,80,255)}
-				):Play()
+				)
 
-				task.wait(0.8)
+				t1:Play()
+				t1.Completed:Wait()
 
-				TweenService:Create(
+				local t2 = TweenService:Create(
 					stroke,
 					TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
 					{Color = Color3.fromRGB(160,230,255)}
-				):Play()
+				)
 
-				task.wait(0.8)
+				t2:Play()
+				t2.Completed:Wait()
 
 			end
 
 		end)
 
-		-- กดปุ่ม
 		btn.MouseButton1Click:Connect(function()
 			shootMurderer()
 		end)
 
 	else
+
+		floatLoop = false
 
 		if floatGui then
 			floatGui:Destroy()
