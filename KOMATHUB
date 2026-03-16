@@ -1310,206 +1310,6 @@ Callback=function()
 end
 })
 
--- =========================
--- AUTO SHOOT MURDERER
--- =========================
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-
-local autoShoot = false
-
--- หา Murderer
-local function getMurdererTarget()
-
-	local closest = nil
-	local distance = math.huge
-
-	for _,plr in pairs(Players:GetPlayers()) do
-
-		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-
-			local backpack = plr:FindFirstChild("Backpack")
-			local char = plr.Character
-			local isMurderer = false
-
-			if backpack and backpack:FindFirstChild("Knife") then
-				isMurderer = true
-			end
-
-			if char and char:FindFirstChild("Knife") then
-				isMurderer = true
-			end
-
-			if isMurderer then
-
-				local pos,visible =
-				camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-
-				if visible then
-
-					local dist =
-					(Vector2.new(pos.X,pos.Y)
-					-
-					Vector2.new(
-						camera.ViewportSize.X/2,
-						camera.ViewportSize.Y/2
-					)).Magnitude
-
-					if dist < distance then
-						distance = dist
-						closest = plr
-					end
-
-				end
-
-			end
-
-		end
-
-	end
-
-	return closest
-end
-
--- ยิง
-local function shootMurderer()
-
-	local char = player.Character
-	if not char then return end
-
-	local tool = char:FindFirstChild("Gun")
-	if not tool then return end
-
-	local remote = tool:FindFirstChild("Shoot")
-	if not remote then return end
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local attachment = root:FindFirstChild("GunRaycastAttachment")
-	if not attachment then return end
-
-	local target = getMurdererTarget()
-	if not target then return end
-
-	local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-	if not targetHRP then return end
-
-	remote:FireServer(
-		attachment.WorldCFrame,
-		CFrame.new(targetHRP.Position)
-	)
-
-end
-
--- =========================
--- ปุ่มเมนูหลัก
--- =========================
-
-SettingsTab:Button({
-Title="ออโต้ยิงฆาตกร(แบบกด)",
-Callback=function()
-	shootMurderer()
-end
-})
-
--- =========================
--- ปุ่มลอย
--- =========================
-
-local TweenService = game:GetService("TweenService")
-
-local floatGui = nil
-local floatLoop = false
-
-SettingsTab:Toggle({
-Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
-Default=false,
-Callback=function(state)
-
-	if state then
-
-		if floatGui then
-			floatGui:Destroy()
-		end
-
-		floatGui = Instance.new("ScreenGui")
-		floatGui.Name = "ShootMurdererFloat"
-		floatGui.ResetOnSpawn = false
-		floatGui.Parent = player.PlayerGui
-
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0,140,0,52)
-		btn.Position = UDim2.new(0.5,-70,0.87,0)
-		btn.AnchorPoint = Vector2.new(0.5,0)
-		btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
-		btn.BackgroundTransparency = 0.35
-		btn.TextColor3 = Color3.fromRGB(0,70,150)
-		btn.Text = "ยิงฆาตกร"
-		btn.Font = Enum.Font.GothamBold
-		btn.TextSize = 14
-		btn.Active = true
-		btn.Draggable = true
-		btn.Parent = floatGui
-
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0,18)
-		corner.Parent = btn
-
-		local stroke = Instance.new("UIStroke")
-		stroke.Thickness = 2.5
-		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-		stroke.Color = Color3.fromRGB(0,120,255)
-		stroke.Parent = btn
-
-		floatLoop = true
-
-		task.spawn(function()
-
-			while floatLoop and btn.Parent do
-
-				local t1 = TweenService:Create(
-					stroke,
-					TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-					{Color = Color3.fromRGB(0,80,255)}
-				)
-
-				t1:Play()
-				t1.Completed:Wait()
-
-				local t2 = TweenService:Create(
-					stroke,
-					TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-					{Color = Color3.fromRGB(160,230,255)}
-				)
-
-				t2:Play()
-				t2.Completed:Wait()
-
-			end
-
-		end)
-
-		btn.MouseButton1Click:Connect(function()
-			shootMurderer()
-		end)
-
-	else
-
-		floatLoop = false
-
-		if floatGui then
-			floatGui:Destroy()
-			floatGui = nil
-		end
-
-	end
-
-end)
 
 -- =========================
 -- SECTION (กวนตีนคนในเซิฟ)
@@ -2119,6 +1919,211 @@ RunService.RenderStepped:Connect(function()
 
 	if knife then
 		pullPlayers()
+	end
+
+end)
+
+-- =========================
+-- AUTO SHOOT MURDERER
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- หา Murderer
+local function getMurdererTarget()
+
+	local closest = nil
+	local distance = math.huge
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character then
+
+			local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+			if not hrp then continue end
+
+			local isMurderer = false
+
+			local backpack = plr:FindFirstChild("Backpack")
+
+			if backpack and backpack:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if plr.Character:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if isMurderer then
+
+				local pos,visible =
+				camera:WorldToViewportPoint(hrp.Position)
+
+				if visible then
+
+					local dist =
+					(Vector2.new(pos.X,pos.Y)
+					-
+					Vector2.new(
+						camera.ViewportSize.X/2,
+						camera.ViewportSize.Y/2
+					)).Magnitude
+
+					if dist < distance then
+						distance = dist
+						closest = plr
+					end
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return closest
+end
+
+
+-- ยิง
+local function shootMurderer()
+
+	local char = player.Character
+	if not char then return end
+
+	local gun =
+		char:FindFirstChild("Gun") or
+		player.Backpack:FindFirstChild("Gun")
+
+	if not gun then return end
+
+	if gun.Parent ~= char then
+		gun.Parent = char
+	end
+
+	local remote = gun:FindFirstChild("Shoot")
+	if not remote then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local target = getMurdererTarget()
+	if not target then return end
+
+	local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+	if not targetHRP then return end
+
+	remote:FireServer(
+		root.CFrame,
+		CFrame.new(targetHRP.Position)
+	)
+
+end
+
+
+-- =========================
+-- ปุ่มเมนูหลัก
+-- =========================
+
+SettingsTab:Button({
+Title="ออโต้ยิงฆาตกร(แบบกด)",
+Callback=function()
+	shootMurderer()
+end
+})
+
+
+-- =========================
+-- ปุ่มลอย
+-- =========================
+
+local floatGui = nil
+local floatLoop = false
+
+SettingsTab:Toggle({
+Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
+Default=false,
+Callback=function(state)
+
+	if state then
+
+		if floatGui then
+			floatGui:Destroy()
+		end
+
+		floatGui = Instance.new("ScreenGui")
+		floatGui.Name = "ShootMurdererFloat"
+		floatGui.ResetOnSpawn = false
+		floatGui.Parent = player.PlayerGui
+
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0,140,0,52)
+		btn.Position = UDim2.new(0.5,-70,0.87,0)
+		btn.AnchorPoint = Vector2.new(0.5,0)
+		btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+		btn.BackgroundTransparency = 0.35
+		btn.TextColor3 = Color3.fromRGB(0,70,150)
+		btn.Text = "ยิงฆาตกร"
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 14
+		btn.Active = true
+		btn.Draggable = true
+		btn.Parent = floatGui
+
+		local corner = Instance.new("UICorner",btn)
+		corner.CornerRadius = UDim.new(0,18)
+
+		local stroke = Instance.new("UIStroke",btn)
+		stroke.Thickness = 2.5
+		stroke.Color = Color3.fromRGB(0,120,255)
+
+		floatLoop = true
+
+		task.spawn(function()
+
+			while floatLoop and btn.Parent do
+
+				local t1 = TweenService:Create(
+					stroke,
+					TweenInfo.new(0.8),
+					{Color = Color3.fromRGB(0,80,255)}
+				)
+
+				t1:Play()
+				t1.Completed:Wait()
+
+				local t2 = TweenService:Create(
+					stroke,
+					TweenInfo.new(0.8),
+					{Color = Color3.fromRGB(160,230,255)}
+				)
+
+				t2:Play()
+				t2.Completed:Wait()
+
+			end
+
+		end)
+
+		btn.MouseButton1Click:Connect(function()
+			shootMurderer()
+		end)
+
+	else
+
+		floatLoop = false
+
+		if floatGui then
+			floatGui:Destroy()
+			floatGui = nil
+		end
+
 	end
 
 end)
