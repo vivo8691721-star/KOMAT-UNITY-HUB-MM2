@@ -811,7 +811,7 @@ for _,v in pairs(workspace:GetDescendants()) do
 
 if v.Name=="Coin_Server"
 and v:IsA("BasePart")
-and v.Transparency < 1
+and v:FindFirstChild("TouchInterest")
 and not collectedCoins[v] then
 
 	local d = (root.Position - v.Position).Magnitude
@@ -845,7 +845,6 @@ while flying and char.Parent and targetPart.Parent do
 
 	local targetPos = targetPart.Position
 
-	-- ถ้าโหมดนอนคว่ำ จะอยู่ใต้เหรียญ
 	if flyMode == "นอนคว่ำ" then
 		targetPos = targetPos - Vector3.new(0,3,0)
 	end
