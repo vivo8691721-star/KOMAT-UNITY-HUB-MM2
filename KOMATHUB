@@ -2145,3 +2145,66 @@ Callback=function(state)
 
 end
 })
+
+-- =========================
+-- WALK THROUGH PLAYERS
+-- =========================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+local walkThrough = false
+
+RunService.Stepped:Connect(function()
+
+	if not walkThrough then return end
+
+	local char = player.Character
+	if not char then return end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character then
+
+			for _,part in pairs(plr.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+
+		end
+
+	end
+
+end)
+
+
+-- =========================
+-- BUTTON
+-- =========================
+
+MainTab:Toggle({
+Title="เดินทะลุเพื่อน",
+Default=false,
+Callback=function(state)
+
+	walkThrough = state
+
+	if not state then
+
+		for _,plr in pairs(Players:GetPlayers()) do
+			if plr.Character then
+				for _,part in pairs(plr.Character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = true
+					end
+				end
+			end
+		end
+
+	end
+
+end
+})
