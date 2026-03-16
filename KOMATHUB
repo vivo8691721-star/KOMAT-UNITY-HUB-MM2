@@ -1865,7 +1865,7 @@ Title = "ขนาดวงฮิตบล็อก",
 Step = 1,
 Value = {
 Min = 6,
-Max = 40,
+Max = 150,
 Default = 12
 },
 Callback = function(value)
