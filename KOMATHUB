@@ -1665,6 +1665,20 @@ Title = "เสกอาวุธ"
 })
 
 -- =========================
+-- FUNCTION หา Tool ทั้งเกม
+-- =========================
+
+local function findTool(toolName)
+
+	for _,v in pairs(game:GetDescendants()) do
+		if v:IsA("Tool") and v.Name == toolName then
+			return v
+		end
+	end
+
+end
+
+-- =========================
 -- เสกมีด
 -- =========================
 
@@ -1672,19 +1686,11 @@ WeaponSection:Button({
 Title = "เสกมีด",
 Callback = function()
 
-	local char = player.Character
-	if not char then return end
+	local tool = findTool("Knife")
 
-	local backpack = player:FindFirstChild("Backpack")
-
-	for _,v in pairs(workspace:GetDescendants()) do
-		if v:IsA("Tool") and v.Name == "Knife" then
-
-			local clone = v:Clone()
-			clone.Parent = backpack
-
-			break
-		end
+	if tool then
+		local clone = tool:Clone()
+		clone.Parent = player.Backpack
 	end
 
 end
@@ -1698,19 +1704,11 @@ WeaponSection:Button({
 Title = "เสกปืน",
 Callback = function()
 
-	local char = player.Character
-	if not char then return end
+	local tool = findTool("Gun")
 
-	local backpack = player:FindFirstChild("Backpack")
-
-	for _,v in pairs(workspace:GetDescendants()) do
-		if v:IsA("Tool") and v.Name == "Gun" then
-
-			local clone = v:Clone()
-			clone.Parent = backpack
-
-			break
-		end
+	if tool then
+		local clone = tool:Clone()
+		clone.Parent = player.Backpack
 	end
 
 end
