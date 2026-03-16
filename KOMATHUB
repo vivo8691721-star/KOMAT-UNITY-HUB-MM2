@@ -82,6 +82,7 @@ Icon="coins"
 -- =========================
 
 local autoGunDrop = false
+local teleporting = false
 
 local function findGunDrop()
 
@@ -97,15 +98,14 @@ SettingsTab:Toggle({
 Title="ออโต้วาร์ปไปเก็บปืน",
 Default=false,
 Callback=function(state)
-
 	autoGunDrop = state
-
 end
 })
 
-RunService.RenderStepped:Connect(function()
+RunService.Heartbeat:Connect(function()
 
 	if not autoGunDrop then return end
+	if teleporting then return end
 
 	local char = player.Character
 	if not char then return end
@@ -117,6 +117,8 @@ RunService.RenderStepped:Connect(function()
 
 	if gunDrop then
 
+		teleporting = true
+
 		local oldPos = root.CFrame
 
 		root.CFrame = gunDrop.CFrame + Vector3.new(0,2,0)
@@ -126,6 +128,10 @@ RunService.RenderStepped:Connect(function()
 		if root then
 			root.CFrame = oldPos
 		end
+
+		task.wait(0.3)
+
+		teleporting = false
 
 	end
 
