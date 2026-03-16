@@ -2352,11 +2352,37 @@ end
 })
 
 -- =========================
--- FLOATING GUN TELEPORT
+-- SERVICES
 -- =========================
 
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
 local floatingGunButton = nil
+
+-- =========================
+-- FIND GUNDROP (SCAN MAP)
+-- =========================
+
+local function findGunDrop()
+
+	for _,v in ipairs(workspace:GetDescendants()) do
+
+		if v.Name == "GunDrop" and v:IsA("BasePart") then
+			return v
+		end
+
+	end
+
+	return nil
+end
+
+
+-- =========================
+-- CREATE FLOATING BUTTON
+-- =========================
 
 local function createFloatingGunButton()
 
@@ -2365,11 +2391,11 @@ local function createFloatingGunButton()
 	local FloatingGui = Instance.new("ScreenGui")
 	FloatingGui.Name = "GunTeleportButton"
 	FloatingGui.ResetOnSpawn = false
-	FloatingGui.Parent = game.CoreGui
+	FloatingGui.Parent = player.PlayerGui
 
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0,140,0,52)
-	btn.Position = UDim2.new(0.5,-70,0.80,0)
+	btn.Position = UDim2.new(0.5,-70,0.87,0)
 	btn.AnchorPoint = Vector2.new(0.5,0)
 	btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
 	btn.BackgroundTransparency = 0.35
@@ -2391,6 +2417,7 @@ local function createFloatingGunButton()
 
 	-- เอฟเฟกต์ขอบวิ่ง
 	task.spawn(function()
+
 		while btn.Parent do
 
 			TweenService:Create(
@@ -2410,7 +2437,9 @@ local function createFloatingGunButton()
 			task.wait(0.8)
 
 		end
+
 	end)
+
 
 	-- =========================
 	-- CLICK BUTTON
@@ -2424,7 +2453,7 @@ local function createFloatingGunButton()
 		local root = char:FindFirstChild("HumanoidRootPart")
 		if not root then return end
 
-		local gun = workspace:FindFirstChild("GunDrop")
+		local gun = findGunDrop()
 		if not gun then return end
 
 		local oldPos = root.CFrame
@@ -2441,6 +2470,11 @@ local function createFloatingGunButton()
 
 end
 
+
+-- =========================
+-- REMOVE FLOATING BUTTON
+-- =========================
+
 local function removeFloatingGunButton()
 
 	if floatingGunButton then
@@ -2455,7 +2489,7 @@ end
 -- WINDUI TOGGLE
 -- =========================
 
-SettingsTab:Toggle({
+MainTab:Toggle({
 Title="วาร์ปไปเก็บปืน(ปุ่มลอย)",
 Default=false,
 Callback=function(state)
