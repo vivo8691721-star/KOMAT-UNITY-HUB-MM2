@@ -1923,3 +1923,104 @@ RunService.RenderStepped:Connect(function()
 	end
 
 end)
+
+-- =========================
+-- SECTION MASS KILL
+-- =========================
+
+local KillSection = MurderTab:Section({
+Title = "Mass Kill"
+})
+
+local killAll = false
+local autoKill = false
+
+-- =========================
+-- FUNCTION ดึงผู้เล่น
+-- =========================
+
+local function pullPlayers()
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	-- ถือมีด
+	local knife =
+		char:FindFirstChild("Knife") or
+		player.Backpack:FindFirstChild("Knife")
+
+	if knife and knife.Parent ~= char then
+		knife.Parent = char
+	end
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local enemyRoot = plr.Character.HumanoidRootPart
+
+			enemyRoot.CFrame =
+				root.CFrame *
+				CFrame.new(0,0,-3)
+
+		end
+
+	end
+
+end
+
+-- =========================
+-- Toggle ฆ่าทุกคน
+-- =========================
+
+KillSection:Toggle({
+Title="ฆ่าทุกคน",
+Default=false,
+Callback=function(state)
+
+	killAll = state
+
+	if state then
+		pullPlayers()
+	end
+
+end
+})
+
+-- =========================
+-- Toggle ออโต้ฆ่าทุกคน
+-- =========================
+
+KillSection:Toggle({
+Title="ออโต้ฆ่าทุกคน",
+Default=false,
+Callback=function(state)
+
+	autoKill = state
+
+end
+})
+
+-- =========================
+-- LOOP ตรวจมีด
+-- =========================
+
+RunService.RenderStepped:Connect(function()
+
+	if not autoKill then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local knife =
+		char:FindFirstChild("Knife") or
+		player.Backpack:FindFirstChild("Knife")
+
+	if knife then
+		pullPlayers()
+	end
+
+end)
