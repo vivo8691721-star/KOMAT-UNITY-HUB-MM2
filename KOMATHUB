@@ -795,15 +795,15 @@ local function noclipLoop(char)
 
 task.spawn(function()
 
-while flying and char.Parent do    
+while flying and char.Parent do
 
-	for _,v in pairs(char:GetDescendants()) do    
-		if v:IsA("BasePart") then    
-			v.CanCollide = false    
-		end    
-	end    
+	for _,v in pairs(char:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = false
+		end
+	end
 
-	RunService.Stepped:Wait()    
+	RunService.Stepped:Wait()
 
 end
 
@@ -829,40 +829,55 @@ end
 end
 
 --========================
--- หาเหรียญใกล้สุด
+-- เช็คว่าเหรียญมองเห็นได้
+--========================
+
+local function coinVisible(coin)
+
+if not coin:IsA("BasePart") then
+return false
+end
+
+if coin.Transparency >= 1 then
+return false
+end
+
+if not coin.Parent then
+return false
+end
+
+return true
+
+end
+
+--========================
+-- หาเหรียญใกล้สุด (ที่เห็นได้)
 --========================
 
 local function getNearestCoin(root)
 
 local nearest
 local dist = math.huge
-local foundVisibleCoin = false
 
 for _,v in pairs(workspace:GetDescendants()) do
 
-	if v.Name=="Coin_Server"
-	and v:IsA("BasePart")
-	and not collectedCoins[v]
-	and v.Transparency == 0 then    
+if v.Name=="Coin_Server"
+and v:IsA("BasePart")
+and not collectedCoins[v]
+and coinVisible(v) then
 
-		foundVisibleCoin = true    
+	local d = (root.Position - v.Position).Magnitude
 
-		local d = (root.Position - v.Position).Magnitude    
-
-		if d < dist then    
-			dist = d    
-			nearest = v    
-		end    
-
+	if d < dist then
+		dist = d
+		nearest = v
 	end
 
 end
 
-if not foundVisibleCoin then
-return nil,true
 end
 
-return nearest,false
+return nearest
 
 end
 
@@ -880,29 +895,35 @@ hum.PlatformStand = true
 
 while flying and char.Parent and targetPart.Parent do
 
-	local targetPos = targetPart.Position    
+local targetPos = targetPart.Position
 
-	if flyMode == "นอนคว่ำ" then    
-		targetPos = targetPart.Position - Vector3.new(0,3,0)    
-	end    
+-- โหมดนอนคว่ำ ใต้ดิน
+if flyMode == "นอนคว่ำ" then
+	targetPos = Vector3.new(
+		targetPos.X,
+		targetPos.Y - 3,
+		targetPos.Z
+	)
+end
 
-	local dir = (targetPos - hrp.Position).Unit    
+local dir = (targetPos - hrp.Position).Unit
 
-	hrp.AssemblyLinearVelocity = dir * flySpeed    
+hrp.AssemblyLinearVelocity = dir * flySpeed
 
-	if flyMode == "นอนคว่ำ" then    
-		hrp.CFrame =    
-			CFrame.new(hrp.Position,targetPart.Position)    
-			* CFrame.Angles(math.rad(90),0,0)    
-	else    
-		hrp.CFrame = CFrame.new(hrp.Position,targetPart.Position)    
-	end    
+if flyMode == "นอนคว่ำ" then
+	hrp.CFrame =
+	CFrame.new(hrp.Position, targetPart.Position)
+	* CFrame.Angles(math.rad(90),0,0)
+else
+	hrp.CFrame =
+	CFrame.new(hrp.Position, targetPart.Position)
+end
 
-	if (hrp.Position - targetPos).Magnitude < 2 then    
-		break    
-	end    
+if (hrp.Position - targetPos).Magnitude < 2 then
+	break
+end
 
-	RunService.RenderStepped:Wait()
+RunService.RenderStepped:Wait()
 
 end
 
@@ -937,39 +958,38 @@ noclipLoop(char)
 
 task.spawn(function()
 
-while flying do    
+while flying do
 
-	local char = getChar()    
-	local root = char:WaitForChild("HumanoidRootPart")    
+	local char = getChar()
+	local root = char:WaitForChild("HumanoidRootPart")
 
-	local coin,noVisibleCoins = getNearestCoin(root)    
+	local coin = getNearestCoin(root)
 
-	if coin then    
+	if coin then
 
-		flyTo(coin)    
+		flyTo(coin)
 
-	else    
+	else
 
-		if noVisibleCoins then    
+		-- ไม่มีเหรียญที่มองเห็น
+		if autoReset and startedCollecting then
 
-			if autoReset then    
+			if char then
+				char:BreakJoints()
+			end
 
-				char:BreakJoints()    
+			task.wait(2)
 
-			else    
+			startedCollecting = false
 
-				flying = false    
-				restore()    
+		else
+			flying = false
+			restore()
+		end
 
-			end    
+		task.wait(0.2)
 
-			break    
-
-		end    
-
-		task.wait(0.1)    
-
-	end    
+	end
 
 end
 
