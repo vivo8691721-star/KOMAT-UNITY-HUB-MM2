@@ -2208,3 +2208,82 @@ Callback=function(state)
 
 end
 })
+
+-- =========================
+-- SERVICES
+-- =========================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local selectedPlayer = nil
+
+-- =========================
+-- FUNCTION รายชื่อผู้เล่น
+-- =========================
+
+local function getPlayerList()
+
+	local list = {}
+
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			table.insert(list, plr.Name)
+		end
+	end
+
+	return list
+
+end
+
+-- =========================
+-- DROPDOWN เลือกผู้เล่น
+-- =========================
+
+local playerDropdown = TeleportTab:Dropdown({
+	Title = "เลือกผู้เล่น",
+	Values = getPlayerList(),
+	Callback = function(value)
+		selectedPlayer = value
+	end
+})
+
+-- =========================
+-- ปุ่มวาร์ป
+-- =========================
+
+TeleportTab:Button({
+	Title = "วาร์ปไปหาเพื่อน",
+	Callback = function()
+
+		if not selectedPlayer then
+			return
+		end
+
+		local target = Players:FindFirstChild(selectedPlayer)
+
+		if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+
+			local myChar = player.Character
+			if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+
+				myChar.HumanoidRootPart.CFrame =
+				target.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
+
+			end
+
+		end
+
+	end
+})
+
+-- =========================
+-- UPDATE รายชื่อผู้เล่น
+-- =========================
+
+local function refreshPlayers()
+	playerDropdown:Refresh(getPlayerList())
+end
+
+Players.PlayerAdded:Connect(refreshPlayers)
+Players.PlayerRemoving:Connect(refreshPlayers)
