@@ -2350,3 +2350,121 @@ Callback=function(state)
 
 end
 })
+
+-- =========================
+-- FLOATING GUN TELEPORT
+-- =========================
+
+local TweenService = game:GetService("TweenService")
+local floatingGunButton = nil
+
+local function createFloatingGunButton()
+
+	if floatingGunButton then return end
+
+	local FloatingGui = Instance.new("ScreenGui")
+	FloatingGui.Name = "GunTeleportButton"
+	FloatingGui.ResetOnSpawn = false
+	FloatingGui.Parent = game.CoreGui
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0,140,0,52)
+	btn.Position = UDim2.new(0.5,-70,0.80,0)
+	btn.AnchorPoint = Vector2.new(0.5,0)
+	btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+	btn.BackgroundTransparency = 0.35
+	btn.TextColor3 = Color3.fromRGB(0,70,150)
+	btn.Text = "เก็บปืน"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.Parent = FloatingGui
+	btn.Active = true
+	btn.Draggable = true
+
+	local corner = Instance.new("UICorner", btn)
+	corner.CornerRadius = UDim.new(0,18)
+
+	local stroke = Instance.new("UIStroke", btn)
+	stroke.Thickness = 2.5
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Color = Color3.fromRGB(0,120,255)
+
+	-- เอฟเฟกต์ขอบวิ่ง
+	task.spawn(function()
+		while btn.Parent do
+
+			TweenService:Create(
+				stroke,
+				TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),
+				{Color = Color3.fromRGB(0,80,255)}
+			):Play()
+
+			task.wait(0.8)
+
+			TweenService:Create(
+				stroke,
+				TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),
+				{Color = Color3.fromRGB(160,230,255)}
+			):Play()
+
+			task.wait(0.8)
+
+		end
+	end)
+
+	-- =========================
+	-- CLICK BUTTON
+	-- =========================
+
+	btn.MouseButton1Click:Connect(function()
+
+		local char = player.Character
+		if not char then return end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+
+		local gun = workspace:FindFirstChild("GunDrop")
+		if not gun then return end
+
+		local oldPos = root.CFrame
+
+		root.CFrame = gun.CFrame + Vector3.new(0,2,0)
+
+		task.wait(0.3)
+
+		root.CFrame = oldPos
+
+	end)
+
+	floatingGunButton = FloatingGui
+
+end
+
+local function removeFloatingGunButton()
+
+	if floatingGunButton then
+		floatingGunButton:Destroy()
+		floatingGunButton = nil
+	end
+
+end
+
+
+-- =========================
+-- WINDUI TOGGLE
+-- =========================
+
+SettingsTab:Toggle({
+Title="วาร์ปไปเก็บปืน(ปุ่มลอย)",
+Default=false,
+Callback=function(state)
+
+	if state then
+		createFloatingGunButton()
+	else
+		removeFloatingGunButton()
+	end
+
+end
+})
