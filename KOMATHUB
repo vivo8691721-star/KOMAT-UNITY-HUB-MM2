@@ -1421,6 +1421,8 @@ end
 -- ปุ่มลอย
 -- =========================
 
+local TweenService = game:GetService("TweenService")
+
 local floatGui = nil
 
 SettingsTab:Toggle({
@@ -1436,28 +1438,59 @@ Callback=function(state)
 		floatGui.Parent = player.PlayerGui
 		floatGui.ResetOnSpawn = false
 
-		local frame = Instance.new("Frame")
-		frame.Size = UDim2.new(0,200,0,200)
-		frame.Position = UDim2.new(0.4,0,0.6,0)
-		frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-		frame.BorderColor3 = Color3.fromRGB(255,255,255)
-		frame.Active = true
-		frame.Draggable = true
-		frame.Parent = floatGui
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0,140,0,52)
+		btn.Position = UDim2.new(0.5,-70,0.87,0)
+		btn.AnchorPoint = Vector2.new(0.5,0)
+		btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+		btn.BackgroundTransparency = 0.35
+		btn.TextColor3 = Color3.fromRGB(0,70,150)
+		btn.Text = "ยิงฆาตกร"
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 14
+		btn.Parent = floatGui
+		btn.Active = true
+		btn.Draggable = true
 
+		-- มุมโค้ง
 		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0,25)
-		corner.Parent = frame
+		corner.CornerRadius = UDim.new(0,18)
+		corner.Parent = btn
 
-		local button = Instance.new("TextButton")
-		button.Size = UDim2.new(1,0,1,0)
-		button.Text = "ยิงฆาตกร"
-		button.TextScaled = true
-		button.TextColor3 = Color3.new(1,1,1)
-		button.BackgroundTransparency = 1
-		button.Parent = frame
+		-- ขอบปุ่ม
+		local stroke = Instance.new("UIStroke")
+		stroke.Thickness = 2.5
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Color = Color3.fromRGB(0,120,255)
+		stroke.Parent = btn
 
-		button.MouseButton1Click:Connect(function()
+		-- เอฟเฟกต์ไล่สีขอบ
+		task.spawn(function()
+
+			while btn.Parent do
+
+				TweenService:Create(
+					stroke,
+					TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+					{Color = Color3.fromRGB(0,80,255)}
+				):Play()
+
+				task.wait(0.8)
+
+				TweenService:Create(
+					stroke,
+					TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+					{Color = Color3.fromRGB(160,230,255)}
+				):Play()
+
+				task.wait(0.8)
+
+			end
+
+		end)
+
+		-- กดปุ่ม
+		btn.MouseButton1Click:Connect(function()
 			shootMurderer()
 		end)
 
@@ -1470,8 +1503,7 @@ Callback=function(state)
 
 	end
 
-end
-})
+end)
 
 -- =========================
 -- SECTION (กวนตีนคนในเซิฟ)
