@@ -2489,7 +2489,7 @@ end
 -- WINDUI TOGGLE
 -- =========================
 
-MainTab:Toggle({
+SettingsTab:Toggle({
 Title="วาร์ปไปเก็บปืน(ปุ่มลอย)",
 Default=false,
 Callback=function(state)
