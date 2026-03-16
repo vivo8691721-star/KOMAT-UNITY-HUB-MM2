@@ -1796,76 +1796,12 @@ Callback = function()
 end
 })
 
--- =========================
--- HITBOX EXPAND SYSTEM
--- =========================
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-
-local hitboxEnabled = false
-local hitboxSize = 12
-local circle
-
--- =========================
--- สร้างวงกลม
--- =========================
-
-local function createCircle()
-
-	if circle then
-		circle:Destroy()
-	end
-
-	circle = Instance.new("Part")
-	circle.Name = "RedCircle"
-	circle.Shape = Enum.PartType.Cylinder
-	circle.Size = Vector3.new(0.2, hitboxSize, hitboxSize)
-	circle.Color = Color3.fromRGB(255,0,0)
-	circle.Material = Enum.Material.Neon
-	circle.Anchored = true
-	circle.CanCollide = false
-	circle.Parent = workspace
-
-	circle.Orientation = Vector3.new(0,0,90)
-
-end
-
--- =========================
--- ปุ่มเปิดระบบ
--- =========================
-
-MurderTab:Toggle({
-Title="ขยายฮิตบล็อก",
-Default=false,
-Callback=function(state)
-
-	hitboxEnabled = state
-
-	if state then
-		createCircle()
-	else
-		if circle then
-			circle:Destroy()
-			circle = nil
-		end
-	end
-
-end
-})
-
--- =========================
--- ปรับขนาดวง
--- =========================
-
 MurderTab:Slider({
 Title = "ขนาดวงฮิตบล็อก",
 Step = 1,
 Value = {
 Min = 6,
-Max = 150,
+Max = 150, -- ปรับตรงนี้
 Default = 12
 },
 Callback = function(value)
@@ -1878,51 +1814,3 @@ Callback = function(value)
 
 end
 })
-
--- =========================
--- LOOP ระบบ
--- =========================
-
-RunService.RenderStepped:Connect(function()
-
-	if not hitboxEnabled then return end
-
-	local char = player.Character
-	if not char then return end
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	-- อัปเดตตำแหน่งวงกลม
-	if circle then
-
-		circle.Position =
-			Vector3.new(
-				root.Position.X,
-				root.Position.Y - 3,
-				root.Position.Z
-			)
-
-	end
-
-	-- ตรวจคนในวง
-	for _,plr in pairs(Players:GetPlayers()) do
-
-		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-
-			local targetRoot = plr.Character.HumanoidRootPart
-
-			local dist = (root.Position - targetRoot.Position).Magnitude
-
-			if dist < hitboxSize/2 then
-
-				targetRoot.CFrame =
-					root.CFrame * CFrame.new(0,0,-4)
-
-			end
-
-		end
-
-	end
-
-end)
