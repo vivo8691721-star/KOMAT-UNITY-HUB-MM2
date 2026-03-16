@@ -78,6 +78,60 @@ Icon="coins"
 })
 
 -- =========================
+-- AUTO GUN DROP
+-- =========================
+
+local autoGunDrop = false
+
+local function findGunDrop()
+
+	for _,v in pairs(workspace:GetDescendants()) do
+		if v.Name == "GunDrop" and v:IsA("BasePart") then
+			return v
+		end
+	end
+
+end
+
+SettingsTab:Toggle({
+Title="ออโต้วาร์ปไปเก็บปืน",
+Default=false,
+Callback=function(state)
+
+	autoGunDrop = state
+
+end
+})
+
+RunService.RenderStepped:Connect(function()
+
+	if not autoGunDrop then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local gunDrop = findGunDrop()
+
+	if gunDrop then
+
+		local oldPos = root.CFrame
+
+		root.CFrame = gunDrop.CFrame + Vector3.new(0,2,0)
+
+		task.wait(0.5)
+
+		if root then
+			root.CFrame = oldPos
+		end
+
+	end
+
+end)
+
+-- =========================
 -- ITEM CHECK
 -- =========================
 
@@ -2021,60 +2075,6 @@ RunService.RenderStepped:Connect(function()
 
 	if knife then
 		pullPlayers()
-	end
-
-end)
-
--- =========================
--- AUTO GUN DROP
--- =========================
-
-local autoGunDrop = false
-
-local function findGunDrop()
-
-	for _,v in pairs(workspace:GetDescendants()) do
-		if v.Name == "GunDrop" and v:IsA("BasePart") then
-			return v
-		end
-	end
-
-end
-
-SettingsTab:Toggle({
-Title="ออโต้วาร์ปไปเก็บปืน",
-Default=false,
-Callback=function(state)
-
-	autoGunDrop = state
-
-end
-})
-
-RunService.RenderStepped:Connect(function()
-
-	if not autoGunDrop then return end
-
-	local char = player.Character
-	if not char then return end
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local gunDrop = findGunDrop()
-
-	if gunDrop then
-
-		local oldPos = root.CFrame
-
-		root.CFrame = gunDrop.CFrame + Vector3.new(0,2,0)
-
-		task.wait(0.5)
-
-		if root then
-			root.CFrame = oldPos
-		end
-
 	end
 
 end)
