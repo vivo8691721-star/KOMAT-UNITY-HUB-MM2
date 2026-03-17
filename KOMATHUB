@@ -77,6 +77,11 @@ Title="ฟามเงิน",
 Icon="coins"
 })
 
+local GunTab = Window:Tab({
+Title="เกี่ยวกับนายอำเภอ",
+Icon="gun"
+})
+
 -- =========================
 -- AUTO GUN DROP
 -- =========================
@@ -511,7 +516,7 @@ local circleRadius = 200
 
 local camera = workspace.CurrentCamera
 
--- วงกลมกลางจอ
+-- SettingsTab
 local gui = Instance.new("ScreenGui")
 gui.ResetOnSpawn = false
 gui.Parent = player.PlayerGui
@@ -598,7 +603,7 @@ end)
 -- UI SETTINGS
 -- =========================
 
-SettingsTab:Toggle({
+GunTab:Toggle({
 Title="ล็อกตัวฆาตกร",
 Default=false,
 Callback=function(state)
@@ -609,7 +614,7 @@ circle.Visible = state
 end
 })
 
-SettingsTab:Slider({
+GunTab:Slider({
 Title="ขนาดวงตรวจจับ",
 Value={
 Min=100,
@@ -2528,7 +2533,7 @@ local function hasKnife()
 end
 
 MapTab:Toggle({
-Title="Auto Win",
+Title="ออโต้ชนะ",
 Default=false,
 Callback=function(state)
 
@@ -2606,6 +2611,120 @@ end
 end)
 
 end)
+
+end
+})
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+--========================
+-- หา Murderer
+--========================
+
+local function getMurderer()
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player then
+
+			local char = plr.Character
+
+			if char and char:FindFirstChild("Knife") then
+				return plr
+			end
+
+		end
+
+	end
+
+end
+
+--========================
+-- ยิงฆาตกร
+--========================
+
+local function shootMurderer()
+
+	local char = player.Character
+	if not char then return end
+
+	local gun =
+	char:FindFirstChild("Gun")
+	or player.Backpack:FindFirstChild("Gun")
+
+	if not gun then
+		warn("ไม่มีปืน")
+		return
+	end
+
+	-- ถือปืน
+	if gun.Parent ~= char then
+		gun.Parent = char
+	end
+
+	local murderer = getMurderer()
+
+	if murderer and murderer.Character then
+
+		local mroot =
+		murderer.Character:FindFirstChild("HumanoidRootPart")
+
+		if mroot then
+
+			-- ระบบยิง
+			local remote =
+			gun:FindFirstChildWhichIsA("RemoteEvent",true)
+
+			if remote then
+				remote:FireServer(mroot.Position)
+			end
+
+		end
+
+	end
+
+end
+
+--========================
+-- ปุ่มยิงฆาตกร
+--========================
+
+GunTab:Button({
+Title="ยิงฆาตกร",
+Callback=function()
+shootMurderer()
+end
+})
+
+--========================
+-- ปุ่มลอย
+--========================
+
+GunTab:Toggle({
+Title="ยิงฆาตกร (ปุ่มลอย)",
+Default=false,
+Callback=function(state)
+
+	if state then
+
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0,120,0,50)
+		btn.Position = UDim2.new(0,100,0,300)
+		btn.Text = "ยิงฆาตกร"
+		btn.Parent = game.CoreGui
+
+		btn.MouseButton1Click:Connect(function()
+			shootMurderer()
+		end)
+
+	else
+
+		if game.CoreGui:FindFirstChild("TextButton") then
+			game.CoreGui.TextButton:Destroy()
+		end
+
+	end
 
 end
 })
