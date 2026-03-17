@@ -1917,61 +1917,135 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+-- =========================
+-- AUTO SHOOT MURDERER (FULL)
+-- =========================
 
--- หา Murderer
-local function getMurderer()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local autoShoot = true -- เปิด/ปิดได้จากปุ่มของมึง
+
+-- =========================
+-- หา Murderer ที่อยู่ในจอ
+-- =========================
+
+local function getMurdererTarget()
+
+	local closest = nil
+	local distance = math.huge
 
 	for _,plr in pairs(Players:GetPlayers()) do
-		if plr ~= player then
+
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+			local backpack = plr:FindFirstChild("Backpack")
 			local char = plr.Character
-			if char and char:FindFirstChild("Knife") then
-				return plr
+
+			local isMurderer = false
+
+			if backpack and backpack:FindFirstChild("Knife") then
+				isMurderer = true
 			end
+
+			if char:FindFirstChild("Knife") then
+				isMurderer = true
+			end
+
+			if isMurderer then
+
+				local pos,visible =
+				camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+
+				if visible then
+
+					local dist =
+					(Vector2.new(pos.X,pos.Y)
+					-
+					Vector2.new(
+						camera.ViewportSize.X/2,
+						camera.ViewportSize.Y/2
+					)).Magnitude
+
+					if dist < distance then
+						distance = dist
+						closest = plr
+					end
+
+				end
+
+			end
+
 		end
+
 	end
+
+	return closest
 
 end
 
--- ยิงแบบ prediction
-local function shootMurderer()
+-- =========================
+-- LOOP ยิง
+-- =========================
+
+RunService.RenderStepped:Connect(function()
+
+	if not autoShoot then return end
 
 	local char = player.Character
 	if not char then return end
 
-	local gun =
+	-- หา Gun
+	local tool =
 	char:FindFirstChild("Gun")
 	or player.Backpack:FindFirstChild("Gun")
 
-	if not gun then return end
+	if not tool then return end
 
-	if gun.Parent ~= char then
-		gun.Parent = char
+	-- ถือปืน
+	if tool.Parent ~= char then
+		tool.Parent = char
 	end
 
-	local murderer = getMurderer()
-	if not murderer then return end
+	local remote = tool:FindFirstChild("Shoot")
+	if not remote then return end
 
-	local mchar = murderer.Character
-	local mroot = mchar and mchar:FindFirstChild("HumanoidRootPart")
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 
-	if not mroot then return end
+	local attachment =
+	root:FindFirstChild("GunRaycastAttachment")
 
-	local velocity = mroot.AssemblyLinearVelocity
+	if not attachment then return end
 
-	-- ยิงนำประมาณ 0.15 วิ
+	local target = getMurdererTarget()
+	if not target then return end
+
+	local targetHRP =
+	target.Character:FindFirstChild("HumanoidRootPart")
+
+	if not targetHRP then return end
+
+	-- =========================
+	-- Prediction ยิงนำ
+	-- =========================
+
+	local velocity =
+	targetHRP.AssemblyLinearVelocity
+
 	local predictedPosition =
-	mroot.Position + (velocity * 0.15)
+	targetHRP.Position + velocity * 0.12
 
-	local remote =
-	gun:FindFirstChildWhichIsA("RemoteEvent",true)
+	-- ยิง
+	remote:FireServer(
+		attachment.WorldCFrame,
+		CFrame.new(predictedPosition)
+	)
 
-	if remote then
-		remote:FireServer(predictedPosition)
-	end
-
-end
+end)
 
 -- =========================
 -- ปุ่มเมนูหลัก
