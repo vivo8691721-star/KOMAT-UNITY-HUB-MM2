@@ -2483,3 +2483,129 @@ Callback=function(state)
 
 end
 })
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local autoWin = false
+local undergroundPos
+
+local function getCharacter()
+	return player.Character or player.CharacterAdded:Wait()
+end
+
+local function findKnifePlayer()
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local char = plr.Character
+			if char and char:FindFirstChild("Knife") then
+				return plr
+			end
+		end
+	end
+end
+
+local function hasGun()
+	local char = getCharacter()
+	if char:FindFirstChild("Gun") then
+		return true
+	end
+	if player.Backpack:FindFirstChild("Gun") then
+		return true
+	end
+	return false
+end
+
+local function hasKnife()
+	local char = getCharacter()
+	if char:FindFirstChild("Knife") then
+		return true
+	end
+	if player.Backpack:FindFirstChild("Knife") then
+		return true
+	end
+	return false
+end
+
+MapTab:Toggle({
+Title="Auto Win",
+Default=false,
+Callback=function(state)
+
+autoWin = state
+
+if not state then
+	return
+end
+
+task.spawn(function()
+
+local char = getCharacter()
+local root = char:WaitForChild("HumanoidRootPart")
+
+-- วาร์ปลงใต้ดิน
+undergroundPos = root.Position - Vector3.new(0,15,0)
+root.CFrame = CFrame.new(undergroundPos)
+
+RunService.Heartbeat:Connect(function()
+
+if not autoWin then return end
+if not root then return end
+
+-- ล็อกตำแหน่งใต้ดิน
+root.CFrame = CFrame.new(undergroundPos)
+
+-- กรณีถือปืน
+if hasGun() then
+
+	local murderer = findKnifePlayer()
+
+	if murderer and murderer.Character then
+
+		local mroot = murderer.Character:FindFirstChild("HumanoidRootPart")
+
+		if mroot then
+
+			root.CFrame =
+			mroot.CFrame
+			* CFrame.new(0,5,0)
+
+			-- ตรงนี้ให้ใส่ระบบยิงปืนที่มึงเคยใช้
+			-- เช่น remote:FireServer(murderer)
+
+		end
+
+	end
+
+end
+
+-- กรณีถือมีด
+if hasKnife() then
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player and plr.Character then
+
+			local targetRoot =
+			plr.Character:FindFirstChild("HumanoidRootPart")
+
+			if targetRoot then
+
+				targetRoot.CFrame =
+				root.CFrame
+				* CFrame.new(0,0,-5)
+
+			end
+
+		end
+
+	end
+
+end
+
+end)
+
+end)
+
+end
+})
