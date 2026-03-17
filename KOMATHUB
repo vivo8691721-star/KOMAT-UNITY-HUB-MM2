@@ -2024,7 +2024,7 @@ end)
 -- ปุ่มเมนูหลัก
 -- =========================
 
-SettingsTab:Button({
+GunTab:Button({
 Title="ออโต้ยิงฆาตกร(แบบกด)",
 Callback=function()
 
@@ -2118,7 +2118,7 @@ end
 -- Toggle ปุ่มลอย
 -- =========================
 
-SettingsTab:Toggle({
+GunTab:Toggle({
 Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
 Default=false,
 Callback=function(state)
@@ -2639,92 +2639,3 @@ local function getMurderer()
 	end
 
 end
-
---========================
--- ยิงฆาตกร
---========================
-
-local function shootMurderer()
-
-	local char = player.Character
-	if not char then return end
-
-	local gun =
-	char:FindFirstChild("Gun")
-	or player.Backpack:FindFirstChild("Gun")
-
-	if not gun then
-		warn("ไม่มีปืน")
-		return
-	end
-
-	-- ถือปืน
-	if gun.Parent ~= char then
-		gun.Parent = char
-	end
-
-	local murderer = getMurderer()
-
-	if murderer and murderer.Character then
-
-		local mroot =
-		murderer.Character:FindFirstChild("HumanoidRootPart")
-
-		if mroot then
-
-			-- ระบบยิง
-			local remote =
-			gun:FindFirstChildWhichIsA("RemoteEvent",true)
-
-			if remote then
-				remote:FireServer(mroot.Position)
-			end
-
-		end
-
-	end
-
-end
-
---========================
--- ปุ่มยิงฆาตกร
---========================
-
-GunTab:Button({
-Title="ยิงฆาตกร",
-Callback=function()
-shootMurderer()
-end
-})
-
---========================
--- ปุ่มลอย
---========================
-
-GunTab:Toggle({
-Title="ยิงฆาตกร (ปุ่มลอย)",
-Default=false,
-Callback=function(state)
-
-	if state then
-
-		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0,120,0,50)
-		btn.Position = UDim2.new(0,100,0,300)
-		btn.Text = "ยิงฆาตกร"
-		btn.Parent = game.CoreGui
-
-		btn.MouseButton1Click:Connect(function()
-			shootMurderer()
-		end)
-
-	else
-
-		if game.CoreGui:FindFirstChild("TextButton") then
-			game.CoreGui.TextButton:Destroy()
-		end
-
-	end
-
-end
-})
