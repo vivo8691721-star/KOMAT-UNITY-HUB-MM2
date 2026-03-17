@@ -2051,7 +2051,7 @@ end)
 -- ปุ่มเมนูหลัก
 -- =========================
 
-GunTab:Button({
+tunTab:Button({
 Title="ออโต้ยิงฆาตกร(แบบกด)",
 Callback=function()
 
@@ -2145,7 +2145,7 @@ end
 -- Toggle ปุ่มลอย
 -- =========================
 
-GunTab:Toggle({
+huunTab:Toggle({
 Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
 Default=false,
 Callback=function(state)
