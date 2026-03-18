@@ -2500,8 +2500,8 @@ MainTab:Toggle({
 	end
 })
 
-
 local RunService = game:GetService("RunService")  
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local flying = false  
 local autoReset = false  
@@ -2510,6 +2510,34 @@ local flyMode = "ปกติ"
 local collectedCoins = {}  
 local startedCollecting = false  
 local flySpeed = 16  
+
+--========================  
+-- 🔥 SERVER SYNC (แป๊ะ)
+--========================  
+
+local collectedIDs = {}
+
+local coinCollectedRemote = ReplicatedStorage
+	:WaitForChild("Remotes")
+	:WaitForChild("Gameplay")
+	:WaitForChild("CoinCollected")
+
+local coinsStartedRemote = ReplicatedStorage
+	:WaitForChild("Remotes")
+	:WaitForChild("Gameplay")
+	:WaitForChild("CoinsStarted")
+
+-- server บอกว่าเหรียญนี้หมดสิทธิ์
+coinCollectedRemote.OnClientEvent:Connect(function(id, p28, p29)
+	if p29 <= p28 then
+		collectedIDs[id] = true
+	end
+end)
+
+-- เริ่มรอบใหม่
+coinsStartedRemote.OnClientEvent:Connect(function()
+	collectedIDs = {}
+end)
 
 --========================  
 -- UI  
@@ -2582,24 +2610,24 @@ local function restore()
 end  
 
 --========================  
--- 🔥 ตรวจเหรียญจริง (แก้ใหม่)  
+-- 🔥 ตรวจเหรียญ (แป๊ะตามเกม)
 --========================  
 
 local function isRealCoin(v)
 
 	if not v or not v.Parent then return false end
 
-	-- ต้องมี hitbox (เก็บได้)
+	local id = v:GetAttribute("CoinID")
+
+	-- ตาม logic เกม
+	if v:GetAttribute("Collected") then return false end
+	if v:GetAttribute("Delete") then return false end
+
+	-- server sync
+	if id and collectedIDs[id] then return false end
+
+	-- ต้องเก็บได้
 	if not v:FindFirstChild("TouchInterest") then return false end
-
-	-- กันเหรียญที่โดนเก็บแล้วแต่ยังค้าง
-	if collectedCoins[v] then return false end
-
-	-- กันเหรียญที่ขยับไม่ได้ (เหรียญตาย)
-	if v.AssemblyLinearVelocity.Magnitude == 0 then
-		-- เหรียญปกติจะหมุน/มี movement เล็กน้อย
-		return false
-	end
 
 	return true
 end
@@ -2615,8 +2643,8 @@ local function getNearestCoin(root)
 
 	for _,v in pairs(workspace:GetDescendants()) do  
 
-		if v.Name=="Coin_Server"  
-		and v:IsA("BasePart")  
+		if v.Name=="Coin_Server"
+		and v:IsA("BasePart")
 		and isRealCoin(v) then  
 
 			local d = (root.Position - v.Position).Magnitude  
@@ -2635,7 +2663,7 @@ local function getNearestCoin(root)
 end  
 
 --========================  
--- 🔥 เช็คเหรียญหมดจริง  
+-- เช็คหมดแมพ  
 --========================  
 
 local function noCoinsLeft()
@@ -2667,8 +2695,6 @@ local function flyTo(targetPart)
 
 	hum.PlatformStand = true  
 
-	local stuckTime = 0
-
 	while flying and char.Parent and targetPart.Parent do  
 
 		local targetPos = targetPart.Position  
@@ -2678,18 +2704,22 @@ local function flyTo(targetPart)
 		end  
 
 		local dir = (targetPos - hrp.Position).Unit  
+
 		hrp.AssemblyLinearVelocity = dir * flySpeed  
 
-		if (hrp.Position - targetPos).Magnitude < 3 then  
+		if flyMode == "นอนคว่ำ" then  
+			hrp.CFrame =
+				CFrame.new(hrp.Position,targetPart.Position)
+				* CFrame.Angles(math.rad(90),0,0)  
+		else  
+			hrp.CFrame = CFrame.new(hrp.Position,targetPart.Position)  
+		end  
+
+		if (hrp.Position - targetPos).Magnitude < 2 then  
 			break  
 		end  
 
-		stuckTime += RunService.RenderStepped:Wait()
-
-		-- 🔥 กันเหรียญปลอม (ไปไม่ถึง)
-		if stuckTime > 2 then  
-			break  
-		end  
+		RunService.RenderStepped:Wait()  
 
 	end  
 
@@ -2737,13 +2767,14 @@ Callback=function(state)
 
 			else  
 
+				-- 🔥 เหรียญหมดจริง (ตาม server)
 				if noCoinsLeft() then  
 
 					flying = false  
 					restore()  
 
 					if autoReset then  
-						task.wait(0.5)  
+						task.wait(0.3)
 						if char then  
 							char:BreakJoints()  
 						end  
