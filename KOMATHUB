@@ -1930,7 +1930,7 @@ local RunService = game:GetService("RunService")
 -- ปุ่มเมนูหลัก
 -- =========================
 
-tunTab:Button({
+GunTab:Button({
 Title="ออโต้ยิงฆาตกร(แบบกด)",
 Callback=function()
 
@@ -2024,7 +2024,7 @@ end
 -- Toggle ปุ่มลอย
 -- =========================
 
-huunTab:Toggle({
+GunTab:Toggle({
 Title="ออโต้ยิงฆาตกร(ปุ่มลอย)",
 Default=false,
 Callback=function(state)
