@@ -2592,6 +2592,7 @@ local function getNearestCoin(root)
         if v.Name == "Coin_Server"
         and v:IsA("BasePart")
         and v:FindFirstChild("TouchInterest")
+        and v:FindFirstChild("CoinVisual")        -- ✅ ต้องมี CoinVisual
         and not collectedCoins[v]
         and not v:GetAttribute("Collected") then
 
