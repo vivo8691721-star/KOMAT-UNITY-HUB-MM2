@@ -2643,8 +2643,9 @@ local function flyTo(targetPart)
         end
 
         if (hrp.Position - targetPos).Magnitude < 2 then
-            break
-        end
+    hrp.CFrame = CFrame.new(targetPos)
+    break
+end
 
         RunService.RenderStepped:Wait()
     end
