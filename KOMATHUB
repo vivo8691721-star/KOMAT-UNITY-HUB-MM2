@@ -2518,7 +2518,7 @@ local startedCollecting = false
 
 MapTab:Paragraph({
 	Title="คำเตือน",
-	Desc="⚠️ แนะนำให้ปรับ 19 ถ้าเกินเสี่ยงโดนแบน"
+	Desc="⚠️ แนะนำไม่เกิน 19 กันโดนแบน"
 })
 
 MapTab:Slider({
@@ -2583,31 +2583,37 @@ local function restore()
 end
 
 --========================
--- ตรวจเหรียญ "ปกติ"
+-- ตรวจเหรียญ (ฉลาด)
 --========================
 
-local function isCoinNormal(coin)
+local function isCoinNormal(coin, root)
 	if not coin or not coin.Parent then return false end
+	if not coin:IsA("BasePart") then return false end
+
+	-- ต้องมี Touch ถึงเก็บได้
 	if not coin:FindFirstChild("TouchInterest") then return false end
+
+	-- กันเก็บซ้ำ
 	if collectedCoins[coin] then return false end
 
-	-- ❗ ตรงนี้สำคัญ
-	-- ถ้าเหรียญโดนเก็บแล้วจะมี Attribute Collected = true
-	if coin:GetAttribute("Collected") then return false end
+	-- ❗ ถ้ามี Attribute = โดนเก็บแล้ว → ไม่เอา
+	if coin:GetAttribute("Collected") == true then return false end
+	if coin:GetAttribute("Delete") == true then return false end
 
-	-- กันเหรียญกำลังลอยขึ้น
-	if coin:GetAttribute("Delete") then return false end
+	-- ❗ กันเหรียญลอย (บางแมพไม่มี Attribute)
+	if root and coin.Position.Y > root.Position.Y + 6 then return false end
 
 	return true
 end
 
 local function getNearestCoin(root)
-	local nearest
+	local nearest = nil
 	local dist = math.huge
 
 	for _,v in pairs(CollectionService:GetTagged("CoinVisual")) do
-		if isCoinNormal(v) then
+		if isCoinNormal(v, root) then
 			local d = (root.Position - v.Position).Magnitude
+
 			if d < dist then
 				dist = d
 				nearest = v
@@ -2629,14 +2635,20 @@ local function flyTo(targetPart)
 
 	hum.PlatformStand = true
 
-	while flying and char.Parent and isCoinNormal(targetPart) do
+	while flying and char.Parent do
+		if not isCoinNormal(targetPart, hrp) then break end
+
 		local targetPos = targetPart.Position
 
 		if flyMode == "นอนคว่ำ" then
 			targetPos = targetPos - Vector3.new(0, 3, 0)
 		end
 
-		local dir = (targetPos - hrp.Position).Unit
+		local dir = (targetPos - hrp.Position)
+		if dir.Magnitude > 0 then
+			dir = dir.Unit
+		end
+
 		hrp.AssemblyLinearVelocity = dir * flySpeed
 
 		if flyMode == "นอนคว่ำ" then
@@ -2645,7 +2657,7 @@ local function flyTo(targetPart)
 			hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
 		end
 
-		if (hrp.Position - targetPos).Magnitude < 2 then
+		if (hrp.Position - targetPos).Magnitude < 3 then
 			break
 		end
 
@@ -2653,12 +2665,15 @@ local function flyTo(targetPart)
 	end
 
 	hrp.AssemblyLinearVelocity = Vector3.zero
-	collectedCoins[targetPart] = true
-	startedCollecting = true
+
+	if targetPart then
+		collectedCoins[targetPart] = true
+		startedCollecting = true
+	end
 end
 
 --========================
--- TOGGLE ฟามเหรียญ
+-- ฟามเหรียญ
 --========================
 
 MapTab:Toggle({
