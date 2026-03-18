@@ -2582,21 +2582,24 @@ local function restore()
 end  
 
 --========================  
--- 🔥 ตรวจเหรียญจริง  
+-- 🔥 ตรวจเหรียญจริง (แก้ใหม่)  
 --========================  
 
 local function isRealCoin(v)
 
 	if not v or not v.Parent then return false end
 
-	-- กันเหรียญล่องหน / หมดเวลา
-	if v.Transparency >= 1 then return false end
-
-	-- ต้องเก็บได้จริง
+	-- ต้องมี hitbox (เก็บได้)
 	if not v:FindFirstChild("TouchInterest") then return false end
 
-	-- กันซ้ำ
+	-- กันเหรียญที่โดนเก็บแล้วแต่ยังค้าง
 	if collectedCoins[v] then return false end
+
+	-- กันเหรียญที่ขยับไม่ได้ (เหรียญตาย)
+	if v.AssemblyLinearVelocity.Magnitude == 0 then
+		-- เหรียญปกติจะหมุน/มี movement เล็กน้อย
+		return false
+	end
 
 	return true
 end
@@ -2632,7 +2635,7 @@ local function getNearestCoin(root)
 end  
 
 --========================  
--- 🔥 เช็คว่าเหรียญหมดจริง  
+-- 🔥 เช็คเหรียญหมดจริง  
 --========================  
 
 local function noCoinsLeft()
@@ -2664,6 +2667,8 @@ local function flyTo(targetPart)
 
 	hum.PlatformStand = true  
 
+	local stuckTime = 0
+
 	while flying and char.Parent and targetPart.Parent do  
 
 		local targetPos = targetPart.Position  
@@ -2673,22 +2678,18 @@ local function flyTo(targetPart)
 		end  
 
 		local dir = (targetPos - hrp.Position).Unit  
-
 		hrp.AssemblyLinearVelocity = dir * flySpeed  
 
-		if flyMode == "นอนคว่ำ" then  
-			hrp.CFrame =
-				CFrame.new(hrp.Position,targetPart.Position)
-				* CFrame.Angles(math.rad(90),0,0)  
-		else  
-			hrp.CFrame = CFrame.new(hrp.Position,targetPart.Position)  
-		end  
-
-		if (hrp.Position - targetPos).Magnitude < 2 then  
+		if (hrp.Position - targetPos).Magnitude < 3 then  
 			break  
 		end  
 
-		RunService.RenderStepped:Wait()  
+		stuckTime += RunService.RenderStepped:Wait()
+
+		-- 🔥 กันเหรียญปลอม (ไปไม่ถึง)
+		if stuckTime > 2 then  
+			break  
+		end  
 
 	end  
 
@@ -2736,14 +2737,13 @@ Callback=function(state)
 
 			else  
 
-				-- 🔥 เหรียญหมดจริง
 				if noCoinsLeft() then  
 
 					flying = false  
 					restore()  
 
 					if autoReset then  
-						task.wait(0.3) -- กันโดนจับ
+						task.wait(0.5)  
 						if char then  
 							char:BreakJoints()  
 						end  
