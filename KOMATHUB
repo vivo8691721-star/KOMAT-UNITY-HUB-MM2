@@ -2725,3 +2725,59 @@ MainTab:Toggle({
 
 	end
 })
+
+-- =========================
+-- COIN ESP
+-- =========================
+
+local coinESP = false
+
+local function updateCoinESP()
+
+	for _,v in pairs(workspace:GetDescendants()) do
+
+		if v.Name == "Coin_Server" and v:IsA("BasePart") then
+
+			if coinESP then
+
+				if not v:FindFirstChild("CoinHighlight") then
+
+					local hl = Instance.new("Highlight")
+					hl.Name = "CoinHighlight"
+					hl.FillTransparency = 1
+					hl.OutlineColor = Color3.fromRGB(255, 255, 0)
+					hl.OutlineTransparency = 0
+					hl.Adornee = v
+					hl.Parent = v
+
+				end
+
+			else
+
+				local old = v:FindFirstChild("CoinHighlight")
+				if old then
+					old:Destroy()
+				end
+
+			end
+
+		end
+
+	end
+
+end
+
+-- =========================
+-- BUTTON
+-- =========================
+
+MainTab:Toggle({
+	Title = "มองหาเหรียญ",
+	Default = false,
+	Callback = function(state)
+
+		coinESP = state
+		updateCoinESP()
+
+	end
+})
