@@ -2571,3 +2571,157 @@ GunTab:Button({
 
 	end
 })
+
+-- =========================
+-- ROLE ESP SYSTEM
+-- =========================
+
+local roleESP = {
+	murder = false,
+	sheriff = false,
+	innocent = false
+}
+
+local espObjects = {}
+
+local function clearESP()
+
+	for _,v in pairs(espObjects) do
+		if v then
+			v:Destroy()
+		end
+	end
+
+	espObjects = {}
+
+end
+
+
+local function createESP(plr,color,text)
+
+	if not plr.Character then return end
+	local char = plr.Character
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.FillTransparency = 1
+	highlight.OutlineColor = color
+	highlight.OutlineTransparency = 0
+	highlight.Parent = char
+
+	local bill = Instance.new("BillboardGui")
+	bill.Size = UDim2.new(0,120,0,40)
+	bill.StudsOffset = Vector3.new(0,3,0)
+	bill.AlwaysOnTop = true
+	bill.Parent = root
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1,0,1,0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = color
+	label.TextStrokeTransparency = 0
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.Text = text
+	label.Parent = bill
+
+	table.insert(espObjects,highlight)
+	table.insert(espObjects,bill)
+
+end
+
+
+local function updateESP()
+
+	clearESP()
+
+	for _,plr in pairs(Players:GetPlayers()) do
+
+		if plr ~= player then
+
+			local char = plr.Character
+			local backpack = plr:FindFirstChild("Backpack")
+
+			if char then
+
+				local hasKnife =
+				(char:FindFirstChild("Knife"))
+				or
+				(backpack and backpack:FindFirstChild("Knife"))
+
+				local hasGun =
+				(char:FindFirstChild("Gun"))
+				or
+				(backpack and backpack:FindFirstChild("Gun"))
+
+				if roleESP.murder and hasKnife then
+					createESP(plr,Color3.fromRGB(255,0,0),"ไอ้ชั่ว")
+				end
+
+				if roleESP.sheriff and hasGun then
+					createESP(plr,Color3.fromRGB(0,120,255),"นักปราบชั่ว")
+				end
+
+				if roleESP.innocent and not hasKnife and not hasGun then
+					createESP(plr,Color3.fromRGB(0,255,120),"คนดี")
+				end
+
+			end
+
+		end
+
+	end
+
+end
+
+
+task.spawn(function()
+
+	while true do
+		task.wait(1)
+
+		if roleESP.murder or roleESP.sheriff or roleESP.innocent then
+			updateESP()
+		end
+
+	end
+
+end)
+
+-- =========================
+-- BUTTONS
+-- =========================
+
+MainTab:Toggle({
+	Title="มองหาฆาตกร",
+	Default=false,
+	Callback=function(v)
+
+		roleESP.murder = v
+		updateESP()
+
+	end
+})
+
+MainTab:Toggle({
+	Title="มองหานายอำเภอ",
+	Default=false,
+	Callback=function(v)
+
+		roleESP.sheriff = v
+		updateESP()
+
+	end
+})
+
+MainTab:Toggle({
+	Title="มองผู้บริสุทธิ์",
+	Default=false,
+	Callback=function(v)
+
+		roleESP.innocent = v
+		updateESP()
+
+	end
+})
