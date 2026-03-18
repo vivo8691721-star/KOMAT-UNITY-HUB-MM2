@@ -2583,13 +2583,21 @@ local function restore()
 end
 
 --========================
--- หาเหรียญที่เซิร์ฟเวอร์อนุญาต
+-- ตรวจเหรียญ "ปกติ"
 --========================
 
-local function isCoinCollectable(coin)
+local function isCoinNormal(coin)
 	if not coin or not coin.Parent then return false end
 	if not coin:FindFirstChild("TouchInterest") then return false end
 	if collectedCoins[coin] then return false end
+
+	-- ❗ ตรงนี้สำคัญ
+	-- ถ้าเหรียญโดนเก็บแล้วจะมี Attribute Collected = true
+	if coin:GetAttribute("Collected") then return false end
+
+	-- กันเหรียญกำลังลอยขึ้น
+	if coin:GetAttribute("Delete") then return false end
+
 	return true
 end
 
@@ -2598,7 +2606,7 @@ local function getNearestCoin(root)
 	local dist = math.huge
 
 	for _,v in pairs(CollectionService:GetTagged("CoinVisual")) do
-		if isCoinCollectable(v) then
+		if isCoinNormal(v) then
 			local d = (root.Position - v.Position).Magnitude
 			if d < dist then
 				dist = d
@@ -2621,10 +2629,9 @@ local function flyTo(targetPart)
 
 	hum.PlatformStand = true
 
-	while flying and char.Parent and isCoinCollectable(targetPart) do
+	while flying and char.Parent and isCoinNormal(targetPart) do
 		local targetPos = targetPart.Position
 
-		-- โหมดนอนคว่ำ ให้อยู่ใต้เท้าผู้เล่น
 		if flyMode == "นอนคว่ำ" then
 			targetPos = targetPos - Vector3.new(0, 3, 0)
 		end
@@ -2681,22 +2688,17 @@ MapTab:Toggle({
 				if coin then
 					flyTo(coin)
 				else
-					-- รีตัวเมื่อเหรียญหมด
+					-- ❗ ไม่มีเหรียญปกติแล้ว
 					if autoReset and startedCollecting then
-						if char then
-							char:BreakJoints()
-						end
+						char:BreakJoints()
 						task.wait(2)
 						startedCollecting = false
-					end
-
-					-- ถ้าไม่มีเหรียญเก็บได้และไม่ได้รีตัว จะหยุดลอย
-					if not autoReset and not coin then
+					else
 						flying = false
 						restore()
 					end
 
-					task.wait(0.1)
+					task.wait(0.2)
 				end
 			end
 		end)
