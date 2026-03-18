@@ -2501,16 +2501,14 @@ MainTab:Toggle({
 })
 
 local RunService = game:GetService("RunService")
-local CollectionService = game:GetService("CollectionService")
-local player = game.Players.LocalPlayer
 
 local flying = false
 local autoReset = false
 local flyMode = "ปกติ"
-local flySpeed = 16
 
 local collectedCoins = {}
 local startedCollecting = false
+local flySpeed = 16
 
 --========================
 -- UI
@@ -2555,60 +2553,90 @@ return player.Character or player.CharacterAdded:Wait()
 end
 
 local function noclipLoop(char)
+
 task.spawn(function()
+
 while flying and char.Parent do
-for _,v in pairs(char:GetDescendants()) do
-if v:IsA("BasePart") then
-v.CanCollide = false
+
+	for _,v in pairs(char:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = false
+		end
+	end
+
+	RunService.Stepped:Wait()
+
 end
-end
-RunService.Stepped:Wait()
-end
+
 end)
+
 end
 
 local function restore()
+
 local char = getChar()
 local hum = char:WaitForChild("Humanoid")
 local hrp = char:WaitForChild("HumanoidRootPart")
 
-hum.PlatformStand = false  
-hrp.AssemblyLinearVelocity = Vector3.zero  
+hum.PlatformStand = false
+hrp.AssemblyLinearVelocity = Vector3.zero
 
-for _,v in pairs(char:GetDescendants()) do  
-	if v:IsA("BasePart") then  
-		v.CanCollide = true  
-	end  
+for _,v in pairs(char:GetDescendants()) do
+if v:IsA("BasePart") then
+v.CanCollide = true
+end
 end
 
 end
 
 --========================
--- หาเหรียญที่เซิร์ฟเวอร์อนุญาต
+-- 🧠 เช็คเหรียญปกติ
 --========================
 
-local function isCoinCollectable(coin)
-if not coin or not coin.Parent then return false end
-if not coin:FindFirstChild("TouchInterest") then return false end
-if collectedCoins[coin] then return false end
-return true
+local function isNormalCoin(v)
+
+	if v:GetAttribute("Collected") then return false end
+	if v:GetAttribute("Delete") then return false end
+
+	local angVel = v.AssemblyAngularVelocity
+
+	-- ถ้าหมุนเร็ว = มีคนเก็บแล้ว
+	if angVel.Magnitude > 10 then
+		return false
+	end
+
+	return true
 end
+
+--========================
+-- หาเหรียญใกล้สุด
+--========================
 
 local function getNearestCoin(root)
-local nearest
-local dist = math.huge
 
-for _,v in pairs(CollectionService:GetTagged("CoinVisual")) do  
-	if isCoinCollectable(v) then  
-		local d = (root.Position - v.Position).Magnitude  
-		if d < dist then  
-			dist = d  
-			nearest = v  
-		end  
-	end  
-end  
+	local nearest
+	local dist = math.huge
 
-return nearest
+	for _,v in pairs(workspace:GetDescendants()) do
+
+		if v.Name=="Coin_Server"
+		and v:IsA("BasePart")
+		and v:FindFirstChild("TouchInterest")
+		and not collectedCoins[v]
+		and isNormalCoin(v) then
+
+			local d = (root.Position - v.Position).Magnitude
+
+			if d < dist then
+				dist = d
+				nearest = v
+			end
+
+		end
+
+	end
+
+	return nearest
 
 end
 
@@ -2617,38 +2645,43 @@ end
 --========================
 
 local function flyTo(targetPart)
+
 local char = getChar()
 local hrp = char:WaitForChild("HumanoidRootPart")
 local hum = char:WaitForChild("Humanoid")
 
-hum.PlatformStand = true  
+hum.PlatformStand = true
 
-while flying and char.Parent and isCoinCollectable(targetPart) do  
-	local targetPos = targetPart.Position  
+while flying and char.Parent and targetPart.Parent do
 
-	-- โหมดนอนคว่ำ ให้อยู่ใต้เท้าผู้เล่น  
-	if flyMode == "นอนคว่ำ" then  
-		targetPos = targetPos - Vector3.new(0, 3, 0)  
-	end  
+	local targetPos = targetPart.Position
 
-	local dir = (targetPos - hrp.Position).Unit  
-	hrp.AssemblyLinearVelocity = dir * flySpeed  
+	if flyMode == "นอนคว่ำ" then
+		targetPos = targetPos - Vector3.new(0,3,0)
+	end
 
-	if flyMode == "นอนคว่ำ" then  
-		hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position) * CFrame.Angles(math.rad(90),0,0)  
-	else  
-		hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)  
-	end  
+	local dir = (targetPos - hrp.Position).Unit
+	hrp.AssemblyLinearVelocity = dir * flySpeed
 
-	if (hrp.Position - targetPos).Magnitude < 2 then  
-		break  
-	end  
+	if flyMode == "นอนคว่ำ" then
+		hrp.CFrame =
+		CFrame.new(hrp.Position,targetPart.Position)
+		* CFrame.Angles(math.rad(90),0,0)
+	else
+		hrp.CFrame = CFrame.new(hrp.Position,targetPart.Position)
+	end
 
-	RunService.RenderStepped:Wait()  
-end  
+	if (hrp.Position - targetPos).Magnitude < 2 then
+		break
+	end
 
-hrp.AssemblyLinearVelocity = Vector3.zero  
-collectedCoins[targetPart] = true  
+	RunService.RenderStepped:Wait()
+
+end
+
+hrp.AssemblyLinearVelocity = Vector3.zero
+
+collectedCoins[targetPart] = true
 startedCollecting = true
 
 end
@@ -2661,49 +2694,60 @@ MapTab:Toggle({
 Title="ฟามเหรียญ",
 Default=false,
 Callback=function(state)
+
 flying = state
 collectedCoins = {}
 startedCollecting = false
 
-local char = getChar()  
+local char = getChar()
 
-	if not state then  
-		restore()  
-		return  
-	end  
-
-	noclipLoop(char)  
-
-	task.spawn(function()  
-		while flying do  
-			local char = getChar()  
-			local root = char:WaitForChild("HumanoidRootPart")  
-
-			local coin = getNearestCoin(root)  
-
-			if coin then  
-				flyTo(coin)  
-			else  
-				-- รีตัวเมื่อเหรียญหมด  
-				if autoReset and startedCollecting then  
-					if char then  
-						char:BreakJoints()  
-					end  
-					task.wait(2)  
-					startedCollecting = false  
-				end  
-
-				-- ถ้าไม่มีเหรียญเก็บได้และไม่ได้รีตัว จะหยุดลอย  
-				if not autoReset and not coin then  
-					flying = false  
-					restore()  
-				end  
-
-				task.wait(0.1)  
-			end  
-		end  
-	end)  
+if not state then
+restore()
+return
 end
 
-})
+noclipLoop(char)
 
+task.spawn(function()
+
+while flying do
+
+	local char = getChar()
+	local root = char:WaitForChild("HumanoidRootPart")
+
+	local coin = getNearestCoin(root)
+
+	if coin then
+
+		flyTo(coin)
+
+	else
+
+		-- ❌ ไม่มีเหรียญปกติแล้ว
+
+		if autoReset and startedCollecting then
+
+			if char then
+				char:BreakJoints()
+			end
+
+			task.wait(2)
+			startedCollecting = false
+
+		else
+			-- 🛑 หยุดนิ่ง
+			if root then
+				root.AssemblyLinearVelocity = Vector3.zero
+			end
+		end
+
+		task.wait(0.2)
+
+	end
+
+end
+
+end)
+
+end
+})
