@@ -2580,6 +2580,39 @@ local function restore()
     end
 end
 
+-- ตรวจจับเมื่อตายแล้วเกิดใหม่
+player.CharacterAdded:Connect(function(char)
+    if not flying then return end
+
+    -- รอให้ทุก part โหลดเสร็จก่อน
+    char:WaitForChild("HumanoidRootPart")
+    char:WaitForChild("Humanoid")
+
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local lastPos = hrp.Position
+    repeat
+        task.wait(0.2)
+        local newPos = hrp.Position
+        if (newPos - lastPos).Magnitude > 1 then
+            lastPos = newPos
+        else
+            break
+        end
+    until not flying
+
+    task.wait(0.3)
+
+    if flying then
+        -- noclip ทันทีก่อนเลย ไม่รอ
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+        noclipLoop(char) -- แล้วค่อย loop ต่อเนื่อง
+    end
+end)
+
 --========================
 -- หาเหรียญใกล้สุด (เฉพาะหมุนปกติ)
 --========================
@@ -2592,8 +2625,9 @@ local function getNearestCoin(root)
         if v.Name == "Coin_Server"
         and v:IsA("BasePart")
         and v:FindFirstChild("TouchInterest")
+        and v:FindFirstChild("CoinVisual")
         and not collectedCoins[v]
-        and not v:GetAttribute("Collected") then  -- ✅ กรองเหรียญที่หมุนเร็ว/ลอยออก
+        and not v:GetAttribute("Collected") then
 
             local d = (root.Position - v.Position).Magnitude
 
@@ -2617,12 +2651,11 @@ local function flyTo(targetPart)
     local hum = char:WaitForChild("Humanoid")
 
     hum.PlatformStand = true
+    local timeout = tick() + 10
 
     while flying and char.Parent and targetPart.Parent do
-        -- ถ้าเหรียญถูกเก็บไปแล้วระหว่างลอยไป ให้หยุดทันที
-        if targetPart:GetAttribute("Collected") then
-            break
-        end
+        if tick() > timeout then break end
+        if targetPart:GetAttribute("Collected") then break end
 
         local targetPos = targetPart.Position
 
@@ -2631,18 +2664,17 @@ local function flyTo(targetPart)
         end
 
         local dir = (targetPos - hrp.Position).Unit
-
         hrp.AssemblyLinearVelocity = dir * flySpeed
 
         if flyMode == "นอนคว่ำ" then
-            hrp.CFrame =
-                CFrame.new(hrp.Position, targetPart.Position)
+            hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
                 * CFrame.Angles(math.rad(90), 0, 0)
         else
             hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
         end
 
         if (hrp.Position - targetPos).Magnitude < 2 then
+            hrp.CFrame = CFrame.new(targetPos)
             break
         end
 
@@ -2650,7 +2682,6 @@ local function flyTo(targetPart)
     end
 
     hrp.AssemblyLinearVelocity = Vector3.zero
-
     collectedCoins[targetPart] = true
     startedCollecting = true
 end
@@ -2678,25 +2709,30 @@ MapTab:Toggle({
 
         task.spawn(function()
             while flying do
-                local char = getChar()
-                local root = char:WaitForChild("HumanoidRootPart")
+                local ok, err = pcall(function()
+                    local char = getChar()
+                    local root = char:WaitForChild("HumanoidRootPart", 5)
+                    if not root then return end
 
-                local coin = getNearestCoin(root)
+                    local coin = getNearestCoin(root)
 
-                if coin then
-                    flyTo(coin)
-                else
-                    if autoReset and startedCollecting then
-                        if char then
-                            char:BreakJoints()
+                    if coin then
+                        flyTo(coin)
+                    else
+                        if autoReset and startedCollecting then
+                            if char then
+                                char:BreakJoints()
+                            end
+                            task.wait(2)
+                            startedCollecting = false
                         end
-
-                        task.wait(2)
-
-                        startedCollecting = false
+                        task.wait(0.1)
                     end
+                end)
 
-                    task.wait(0.1)
+                if not ok then
+                    warn("CoinFarm error: " .. tostring(err))
+                    task.wait(0.5)
                 end
             end
         end)
