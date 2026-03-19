@@ -2545,6 +2545,7 @@ MapTab:Toggle({
 })
 
 --========================
+--========================
 -- CHARACTER
 --========================
 
@@ -2579,6 +2580,30 @@ local function restore()
         end
     end
 end
+
+-- ✅ เพิ่มส่วนนี้ — ตรวจจับเมื่อตายแล้วเกิดใหม่
+player.CharacterAdded:Connect(function(char)
+    if not flying then return end
+
+    -- รอให้วาร์ปถึง spawn point ก่อน
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local lastPos = hrp.Position
+    repeat
+        task.wait(0.2)
+        local newPos = hrp.Position
+        if (newPos - lastPos).Magnitude > 1 then
+            lastPos = newPos
+        else
+            break
+        end
+    until not flying
+
+    task.wait(0.3) -- รอนิดนึงให้ระบบเกมโหลดเสร็จ
+
+    if flying then
+        noclipLoop(char) -- ✅ noclip char ใหม่
+    end
+end)
 
 --========================
 -- หาเหรียญใกล้สุด (เฉพาะหมุนปกติ)
