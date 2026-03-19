@@ -2643,11 +2643,11 @@ local function flyTo(targetPart)
     local hum = char:WaitForChild("Humanoid")
 
     hum.PlatformStand = true
+    local timeout = tick() + 10 -- ✅ ถ้าลอยนานเกิน 10 วิให้ออกเลย
 
     while flying and char.Parent and targetPart.Parent do
-        if targetPart:GetAttribute("Collected") then
-            break
-        end
+        if tick() > timeout then break end -- ✅ หมดเวลาออก
+        if targetPart:GetAttribute("Collected") then break end
 
         local targetPos = targetPart.Position
 
@@ -2656,27 +2656,24 @@ local function flyTo(targetPart)
         end
 
         local dir = (targetPos - hrp.Position).Unit
-
         hrp.AssemblyLinearVelocity = dir * flySpeed
 
         if flyMode == "นอนคว่ำ" then
-            hrp.CFrame =
-                CFrame.new(hrp.Position, targetPart.Position)
+            hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
                 * CFrame.Angles(math.rad(90), 0, 0)
         else
             hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
         end
 
         if (hrp.Position - targetPos).Magnitude < 2 then
-    hrp.CFrame = CFrame.new(targetPos)
-    break
-end
+            hrp.CFrame = CFrame.new(targetPos)
+            break
+        end
 
         RunService.RenderStepped:Wait()
     end
 
     hrp.AssemblyLinearVelocity = Vector3.zero
-
     collectedCoins[targetPart] = true
     startedCollecting = true
 end
@@ -2702,29 +2699,32 @@ MapTab:Toggle({
 
         noclipLoop(char)
 
-        task.spawn(function()
-            while flying do
-                local char = getChar()
-                local root = char:WaitForChild("HumanoidRootPart")
+task.spawn(function()
+    while flying do
+        local ok, err = pcall(function()
+            local char = getChar()
+            local root = char:WaitForChild("HumanoidRootPart", 5) -- timeout 5 วิ
+            if not root then return end
 
-                local coin = getNearestCoin(root)
+            local coin = getNearestCoin(root)
 
-                if coin then
-                    flyTo(coin)
-                else
-                    if autoReset and startedCollecting then
-                        if char then
-                            char:BreakJoints()
-                        end
-
-                        task.wait(2)
-
-                        startedCollecting = false
+            if coin then
+                flyTo(coin)
+            else
+                if autoReset and startedCollecting then
+                    if char then
+                        char:BreakJoints()
                     end
-
-                    task.wait(0.1)
+                    task.wait(2)
+                    startedCollecting = false
                 end
+                task.wait(0.1)
             end
         end)
+
+        if not ok then
+            warn("CoinFarm error: " .. tostring(err))
+            task.wait(0.5) -- รอแป๊บนึงแล้วลองใหม่
+        end
     end
-})
+end)
