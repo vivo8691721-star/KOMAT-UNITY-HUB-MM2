@@ -2500,3 +2500,205 @@ MainTab:Toggle({
 	end
 })
 
+local RunService = game:GetService("RunService")
+
+local flying = false
+local autoReset = false
+local flyMode = "ปกติ"
+
+local collectedCoins = {}
+local startedCollecting = false
+local flySpeed = 16
+
+--========================
+-- UI
+--========================
+
+MapTab:Paragraph({
+    Title = "คำเตือน",
+    Desc = "⚠️ แนะนำให้ปรับ 19 ถ้าเกินเสี่ยงโดนแบน"
+})
+
+MapTab:Slider({
+    Title = "ความเร็วลอย",
+    Value = {Min = 1, Max = 26, Default = 16},
+    Callback = function(v)
+        flySpeed = v
+    end
+})
+
+MapTab:Dropdown({
+    Title = "ท่าลอย",
+    Values = {"ปกติ", "นอนคว่ำ"},
+    Default = "ปกติ",
+    Callback = function(v)
+        flyMode = v
+    end
+})
+
+MapTab:Toggle({
+    Title = "รีตัวเมื่อเหรียญหมด",
+    Default = false,
+    Callback = function(v)
+        autoReset = v
+    end
+})
+
+--========================
+-- CHARACTER
+--========================
+
+local function getChar()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function noclipLoop(char)
+    task.spawn(function()
+        while flying and char.Parent do
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                end
+            end
+            RunService.Stepped:Wait()
+        end
+    end)
+end
+
+local function restore()
+    local char = getChar()
+    local hum = char:WaitForChild("Humanoid")
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    hum.PlatformStand = false
+    hrp.AssemblyLinearVelocity = Vector3.zero
+
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = true
+        end
+    end
+end
+
+--========================
+-- หาเหรียญใกล้สุด (เฉพาะหมุนปกติ)
+--========================
+
+local function getNearestCoin(root)
+    local nearest
+    local dist = math.huge
+
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name == "Coin_Server"
+        and v:IsA("BasePart")
+        and v:FindFirstChild("TouchInterest")
+        and not collectedCoins[v]
+        and not v:GetAttribute("Collected") then  -- ✅ กรองเหรียญที่หมุนเร็ว/ลอยออก
+
+            local d = (root.Position - v.Position).Magnitude
+
+            if d < dist then
+                dist = d
+                nearest = v
+            end
+        end
+    end
+
+    return nearest
+end
+
+--========================
+-- ลอยไปเหรียญ
+--========================
+
+local function flyTo(targetPart)
+    local char = getChar()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
+
+    hum.PlatformStand = true
+
+    while flying and char.Parent and targetPart.Parent do
+        -- ถ้าเหรียญถูกเก็บไปแล้วระหว่างลอยไป ให้หยุดทันที
+        if targetPart:GetAttribute("Collected") then
+            break
+        end
+
+        local targetPos = targetPart.Position
+
+        if flyMode == "นอนคว่ำ" then
+            targetPos = targetPos - Vector3.new(0, 3, 0)
+        end
+
+        local dir = (targetPos - hrp.Position).Unit
+
+        hrp.AssemblyLinearVelocity = dir * flySpeed
+
+        if flyMode == "นอนคว่ำ" then
+            hrp.CFrame =
+                CFrame.new(hrp.Position, targetPart.Position)
+                * CFrame.Angles(math.rad(90), 0, 0)
+        else
+            hrp.CFrame = CFrame.new(hrp.Position, targetPart.Position)
+        end
+
+        if (hrp.Position - targetPos).Magnitude < 2 then
+            break
+        end
+
+        RunService.RenderStepped:Wait()
+    end
+
+    hrp.AssemblyLinearVelocity = Vector3.zero
+
+    collectedCoins[targetPart] = true
+    startedCollecting = true
+end
+
+--========================
+-- TOGGLE ฟามเหรียญ
+--========================
+
+MapTab:Toggle({
+    Title = "ฟามเหรียญ",
+    Default = false,
+    Callback = function(state)
+        flying = state
+        collectedCoins = {}
+        startedCollecting = false
+
+        local char = getChar()
+
+        if not state then
+            restore()
+            return
+        end
+
+        noclipLoop(char)
+
+        task.spawn(function()
+            while flying do
+                local char = getChar()
+                local root = char:WaitForChild("HumanoidRootPart")
+
+                local coin = getNearestCoin(root)
+
+                if coin then
+                    flyTo(coin)
+                else
+                    if autoReset and startedCollecting then
+                        if char then
+                            char:BreakJoints()
+                        end
+
+                        task.wait(2)
+
+                        startedCollecting = false
+                    end
+
+                    task.wait(0.1)
+                end
+            end
+        end)
+    end
+})
