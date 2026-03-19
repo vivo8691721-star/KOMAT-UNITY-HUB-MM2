@@ -2221,7 +2221,7 @@ local function shootMurderer()
 		gun.Parent = char
 	end
 
-	local remote = gun:FindFirstChild("Shoot")
+	local remote = gun:FindFrootild("Shoot")
 	if not remote then return end
 
 	local root = char:FindFirstChild("HumanoidRootPart")
@@ -2709,7 +2709,7 @@ task.spawn(function()
             local coin = getNearestCoin(root)
 
             if coin then
-                flyTo(coin)
+    flyTo(coin)
             else
                 if autoReset and startedCollecting then
                     if char then
