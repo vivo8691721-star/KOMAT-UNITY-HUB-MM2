@@ -2325,10 +2325,6 @@ MainTab:Toggle({
 	end
 })
 
-
--- เปิดทำงานอัตโนมัติเลย
-MapTab:GetToggle("กันโดนเตะ"):SetState(true)
-
 local RunService = game:GetService("RunService")
 
 local flying = false
@@ -2596,3 +2592,6 @@ SettingsTab:Toggle({
         end
     end
 })
+
+-- เปิดทำงานอัตโนมัติเลย
+MapTab:GetToggle("กันโดนเตะ"):SetState(true)
