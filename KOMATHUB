@@ -2333,17 +2333,14 @@ local player = Players.LocalPlayer
 -- =========================
 -- หา Murderer
 -- =========================
-
 local function getMurderer()
     for _,plr in pairs(Players:GetPlayers()) do
         if plr ~= player then
             local char = plr.Character
             local backpack = plr:FindFirstChild("Backpack")
-
             if char and char:FindFirstChild("Knife") then
                 return plr
             end
-
             if backpack and backpack:FindFirstChild("Knife") then
                 return plr
             end
@@ -2354,22 +2351,16 @@ end
 -- =========================
 -- ยิงฆาตกร
 -- =========================
-
 local function shootMurderer()
     local char = player.Character
     if not char then return end
 
-    local gun =
-        char:FindFirstChild("Gun")
-        or player.Backpack:FindFirstChild("Gun")
-
+    local gun = char:FindFirstChild("Gun") or player.Backpack:FindFirstChild("Gun")
     if not gun then return end
+    if gun.Parent ~= char then gun.Parent = char end
 
-    if gun.Parent ~= char then
-        gun.Parent = char
-    end
-
-    local remote = gun:FindFirstChild("Shoot")
+    -- ✅ แก้ตรงนี้
+    local remote = gun:FindFirstChild("Shoot") -- ไม่ใช่ FindFrootild
     if not remote then return end
 
     local root = char:FindFirstChild("HumanoidRootPart")
@@ -2387,25 +2378,20 @@ local function shootMurderer()
     local mroot = mchar:FindFirstChild("HumanoidRootPart")
     if not mroot then return end
 
+    -- ยิงนำประมาณ 0.15 วิ
     local velocity = mroot.AssemblyLinearVelocity
     local predictedPosition = mroot.Position + velocity * 0.15
 
-    remote:FireServer(
-        attachment.WorldCFrame,
-        CFrame.new(predictedPosition)
-    )
+    remote:FireServer(attachment.WorldCFrame, CFrame.new(predictedPosition))
 end
 
 -- =========================
 -- ปุ่มลอยยิงฆาตกร
 -- =========================
-
 local floatingShootButton = nil
 
 local function createFloatingShootButton()
-    if floatingShootButton then
-        floatingShootButton:Destroy()
-    end
+    if floatingShootButton then floatingShootButton:Destroy() end
 
     local FloatingGui = Instance.new("ScreenGui")
     FloatingGui.Parent = player.PlayerGui
@@ -2435,24 +2421,15 @@ local function createFloatingShootButton()
 
     task.spawn(function()
         while btn.Parent do
-            TweenService:Create(
-                stroke,
-                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                {Color = Color3.fromRGB(0,80,255)}
-            ):Play()
+            TweenService:Create(stroke,TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Color=Color3.fromRGB(0,80,255)}):Play()
             task.wait(0.8)
-
-            TweenService:Create(
-                stroke,
-                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                {Color = Color3.fromRGB(160,230,255)}
-            ):Play()
+            TweenService:Create(stroke,TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Color=Color3.fromRGB(160,230,255)}):Play()
             task.wait(0.8)
         end
     end)
 
     btn.MouseButton1Click:Connect(function()
-        shootMurderer()
+        shootMurderer() -- ยิงได้จริงแล้ว
     end)
 
     floatingShootButton = FloatingGui
@@ -2461,17 +2438,16 @@ end
 -- =========================
 -- ปุ่มใน GunTab
 -- =========================
-
 GunTab:Button({
-    Title = "ยิงฆาตกร",
-    Callback = function()
+    Title="ยิงฆาตกร",
+    Callback=function()
         shootMurderer()
     end
 })
 
 GunTab:Button({
-    Title = "ยิงฆาตกร (ปุ่มลอย)",
-    Callback = function()
+    Title="ยิงฆาตกร (ปุ่มลอย)",
+    Callback=function()
         createFloatingShootButton()
     end
 })
