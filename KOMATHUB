@@ -2325,6 +2325,189 @@ MainTab:Toggle({
 	end
 })
 
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+-- =========================
+-- หา Murderer
+-- =========================
+
+local function getMurderer()
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local char = plr.Character
+            local backpack = plr:FindFirstChild("Backpack")
+
+            if char and char:FindFirstChild("Knife") then
+                return plr
+            end
+
+            if backpack and backpack:FindFirstChild("Knife") then
+                return plr
+            end
+        end
+    end
+end
+
+-- =========================
+-- ยิงฆาตกร
+-- =========================
+
+local function shootMurderer()
+    local char = player.Character
+    if not char then return end
+
+    local gun =
+        char:FindFirstChild("Gun")
+        or player.Backpack:FindFirstChild("Gun")
+
+    if not gun then return end
+
+    if gun.Parent ~= char then
+        gun.Parent = char
+    end
+
+    local remote = gun:FindFirstChild("Shoot")
+    if not remote then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local attachment = root:FindFirstChild("GunRaycastAttachment")
+    if not attachment then return end
+
+    local murderer = getMurderer()
+    if not murderer then return end
+
+    local mchar = murderer.Character
+    if not mchar then return end
+
+    local mroot = mchar:FindFirstChild("HumanoidRootPart")
+    if not mroot then return end
+
+    local velocity = mroot.AssemblyLinearVelocity
+    local predictedPosition = mroot.Position + velocity * 0.15
+
+    remote:FireServer(
+        attachment.WorldCFrame,
+        CFrame.new(predictedPosition)
+    )
+end
+
+-- =========================
+-- ปุ่มลอยยิงฆาตกร
+-- =========================
+
+local floatingShootButton = nil
+
+local function createFloatingShootButton()
+    if floatingShootButton then
+        floatingShootButton:Destroy()
+    end
+
+    local FloatingGui = Instance.new("ScreenGui")
+    FloatingGui.Parent = player.PlayerGui
+    FloatingGui.ResetOnSpawn = false
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,140,0,52)
+    btn.Position = UDim2.new(0.5,-70,0.87,0)
+    btn.AnchorPoint = Vector2.new(0.5,0)
+    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
+    btn.BackgroundTransparency = 0.35
+    btn.TextColor3 = Color3.fromRGB(0,70,150)
+    btn.Text = "ยิงฆาตกร"
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.Parent = FloatingGui
+    btn.Active = true
+    btn.Draggable = true
+
+    local corner = Instance.new("UICorner", btn)
+    corner.CornerRadius = UDim.new(0,18)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = Color3.fromRGB(0,120,255)
+
+    task.spawn(function()
+        while btn.Parent do
+            TweenService:Create(
+                stroke,
+                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(0,80,255)}
+            ):Play()
+            task.wait(0.8)
+
+            TweenService:Create(
+                stroke,
+                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {Color = Color3.fromRGB(160,230,255)}
+            ):Play()
+            task.wait(0.8)
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        shootMurderer()
+    end)
+
+    floatingShootButton = FloatingGui
+end
+
+-- =========================
+-- ปุ่มใน GunTab
+-- =========================
+
+GunTab:Button({
+    Title = "ยิงฆาตกร",
+    Callback = function()
+        shootMurderer()
+    end
+})
+
+GunTab:Button({
+    Title = "ยิงฆาตกร (ปุ่มลอย)",
+    Callback = function()
+        createFloatingShootButton()
+    end
+})
+
+-- =========================
+-- เมนูหลัก: กันโดนเตะ
+-- =========================
+local AntiAFKConnection
+
+MapTab:Toggle({
+    Title = "กันโดนเตะ",
+    Default = true, -- เปิดตลอดเวลา
+    Callback = function(state)
+        if state then
+            if not AntiAFKConnection then
+                AntiAFKConnection = player.Idled:Connect(function()
+                    pcall(function()
+                        local VirtualUser = game:GetService("VirtualUser")
+                        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                        task.wait(1)
+                        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                    end)
+                end)
+            end
+        else
+            if AntiAFKConnection then
+                AntiAFKConnection:Disconnect()
+                AntiAFKConnection = nil
+            end
+        end
+    end
+})
+
+-- เปิดทำงานอัตโนมัติเลย
+MapTab:GetToggle("กันโดนเตะ"):SetState(true)
+
 local RunService = game:GetService("RunService")
 
 local flying = false
@@ -2564,383 +2747,3 @@ MapTab:Toggle({
     end
 })
 
--- =========================
--- เมนูหลัก: กันโดนเตะ
--- =========================
-local AntiAFKConnection
-
-MapTab:Toggle({
-    Title = "กันโดนเตะ",
-    Default = true, -- เปิดตลอดเวลา
-    Callback = function(state)
-        if state then
-            if not AntiAFKConnection then
-                AntiAFKConnection = player.Idled:Connect(function()
-                    pcall(function()
-                        local VirtualUser = game:GetService("VirtualUser")
-                        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                        task.wait(1)
-                        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                    end)
-                end)
-            end
-        else
-            if AntiAFKConnection then
-                AntiAFKConnection:Disconnect()
-                AntiAFKConnection = nil
-            end
-        end
-    end
-})
-
--- เปิดทำงานอัตโนมัติเลย
-MapTab:GetToggle("กันโดนเตะ"):SetState(true)
-
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-
--- =========================
--- หา Murderer
--- =========================
-
-local function getMurderer()
-
-	for _,plr in pairs(Players:GetPlayers()) do
-
-		if plr ~= player then
-
-			local char = plr.Character
-			local backpack = plr:FindFirstChild("Backpack")
-
-			if char and char:FindFirstChild("Knife") then
-				return plr
-			end
-
-			if backpack and backpack:FindFirstChild("Knife") then
-				return plr
-			end
-
-		end
-
-	end
-
-end
-
--- =========================
--- ยิงฆาตกร (แม่น + กันพลาด)
--- =========================
-
-local function shootMurderer()
-
-	local char = player.Character
-	if not char then return end
-
-	local gun =
-	char:FindFirstChild("Gun")
-	or player.Backpack:FindFirstChild("Gun")
-
-	if not gun then return end
-
-	if gun.Parent ~= char then
-		gun.Parent = char
-	end
-
-	-- 🔥 หา Remote กันพลาด
-	local remote =
-	gun:FindFirstChild("Shoot")
-	or gun:FindFirstChildWhichIsA("RemoteEvent", true)
-
-	if not remote then return end
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local attachment = root:FindFirstChild("GunRaycastAttachment")
-	if not attachment then return end
-
-	local murderer = getMurderer()
-	if not murderer then return end
-
-	local mchar = murderer.Character
-	if not mchar then return end
-
-	local mroot = mchar:FindFirstChild("HumanoidRootPart")
-	if not mroot then return end
-
-	-- 🎯 ยิงนำ + เล็งหัว
-	local velocity = mroot.AssemblyLinearVelocity
-	local predictedPosition =
-	mroot.Position + velocity * 0.2 + Vector3.new(0,1.5,0)
-
-	remote:FireServer(
-		attachment.WorldCFrame,
-		CFrame.new(predictedPosition)
-	)
-
-end
-
--- =========================
--- 🔥 AUTO SHOOT
--- =========================
-
-local autoShoot = false
-
-task.spawn(function()
-	while true do
-		if autoShoot then
-			shootMurderer()
-		end
-		task.wait(0.15) -- ยิงถี่
-	end
-end)
-
--- =========================
--- 🎮 ปุ่มลอย
--- =========================
-
-local floatingGui = nil
-
-local function createFloatingUI()
-
-	if floatingGui then return end
-
-	local gui = Instance.new("ScreenGui")
-	gui.Parent = player:WaitForChild("PlayerGui")
-	gui.ResetOnSpawn = false
-
-	-- 🔫 ปุ่มยิง
-	local shootBtn = Instance.new("TextButton")
-	shootBtn.Size = UDim2.new(0,140,0,50)
-	shootBtn.Position = UDim2.new(0.5,-70,0.8,0)
-	shootBtn.BackgroundColor3 = Color3.fromRGB(180,220,255)
-	shootBtn.Text = "ยิงฆาตกร"
-	shootBtn.TextColor3 = Color3.fromRGB(0,70,150)
-	shootBtn.Font = Enum.Font.GothamBold
-	shootBtn.TextSize = 14
-	shootBtn.Parent = gui
-	shootBtn.Draggable = true
-
-	Instance.new("UICorner", shootBtn)
-
-	-- ⚡ ปุ่ม Auto
-	local autoBtn = Instance.new("TextButton")
-	autoBtn.Size = UDim2.new(0,140,0,50)
-	autoBtn.Position = UDim2.new(0.5,-70,0.87,0)
-	autoBtn.BackgroundColor3 = Color3.fromRGB(255,200,200)
-	autoBtn.Text = "AUTO: OFF"
-	autoBtn.TextColor3 = Color3.fromRGB(120,0,0)
-	autoBtn.Font = Enum.Font.GothamBold
-	autoBtn.TextSize = 14
-	autoBtn.Parent = gui
-	autoBtn.Draggable = true
-
-	Instance.new("UICorner", autoBtn)
-
-	-- เอฟเฟกต์ขอบ
-	local stroke = Instance.new("UIStroke", shootBtn)
-	stroke.Thickness = 2
-
-	task.spawn(function()
-		while gui.Parent do
-			TweenService:Create(stroke,TweenInfo.new(0.8),{Color=Color3.fromRGB(0,80,255)}):Play()
-			task.wait(0.8)
-			TweenService:Create(stroke,TweenInfo.new(0.8),{Color=Color3.fromRGB(160,230,255)}):Play()
-			task.wait(0.8)
-		end
-	end)
-
-	-- 🔫 กดแล้วยิง
-	shootBtn.MouseButton1Click:Connect(function()
-		shootMurderer()
-	end)
-
-	-- ⚡ เปิด/ปิด Auto
-	autoBtn.MouseButton1Click:Connect(function()
-
-		autoShoot = not autoShoot
-
-		if autoShoot then
-			autoBtn.Text = "AUTO: ON"
-			autoBtn.BackgroundColor3 = Color3.fromRGB(180,255,180)
-		else
-			autoBtn.Text = "AUTO: OFF"
-			autoBtn.BackgroundColor3 = Color3.fromRGB(255,200,200)
-		end
-
-	end)
-
-	floatingGui = gui
-
-end
-
--- =========================
--- 📌 ปุ่มใน GunTab
--- =========================
-
-GunTab:Button({
-	Title="ยิงฆาตกร",
-	Callback=function()
-		shootMurderer()
-	end
-})
-
-GunTab:Button({
-	Title="เปิดปุ่มลอย (เทพ)",
-	Callback=function()
-		createFloatingUI()
-	end
-})
-
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-
-local player = Players.LocalPlayer
-
--- =========================
--- หา Murderer
--- =========================
-
-local function getMurderer()
-    for _,plr in pairs(Players:GetPlayers()) do
-        if plr ~= player then
-            local char = plr.Character
-            local backpack = plr:FindFirstChild("Backpack")
-
-            if char and char:FindFirstChild("Knife") then
-                return plr
-            end
-
-            if backpack and backpack:FindFirstChild("Knife") then
-                return plr
-            end
-        end
-    end
-end
-
--- =========================
--- ยิงฆาตกร
--- =========================
-
-local function shootMurderer()
-    local char = player.Character
-    if not char then return end
-
-    local gun =
-        char:FindFirstChild("Gun")
-        or player.Backpack:FindFirstChild("Gun")
-
-    if not gun then return end
-
-    if gun.Parent ~= char then
-        gun.Parent = char
-    end
-
-    local remote = gun:FindFirstChild("Shoot")
-    if not remote then return end
-
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-
-    local attachment = root:FindFirstChild("GunRaycastAttachment")
-    if not attachment then return end
-
-    local murderer = getMurderer()
-    if not murderer then return end
-
-    local mchar = murderer.Character
-    if not mchar then return end
-
-    local mroot = mchar:FindFirstChild("HumanoidRootPart")
-    if not mroot then return end
-
-    local velocity = mroot.AssemblyLinearVelocity
-    local predictedPosition = mroot.Position + velocity * 0.15
-
-    remote:FireServer(
-        attachment.WorldCFrame,
-        CFrame.new(predictedPosition)
-    )
-end
-
--- =========================
--- ปุ่มลอยยิงฆาตกร
--- =========================
-
-local floatingShootButton = nil
-
-local function createFloatingShootButton()
-    if floatingShootButton then
-        floatingShootButton:Destroy()
-    end
-
-    local FloatingGui = Instance.new("ScreenGui")
-    FloatingGui.Parent = player.PlayerGui
-    FloatingGui.ResetOnSpawn = false
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,140,0,52)
-    btn.Position = UDim2.new(0.5,-70,0.87,0)
-    btn.AnchorPoint = Vector2.new(0.5,0)
-    btn.BackgroundColor3 = Color3.fromRGB(180,220,255)
-    btn.BackgroundTransparency = 0.35
-    btn.TextColor3 = Color3.fromRGB(0,70,150)
-    btn.Text = "ยิงฆาตกร"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 14
-    btn.Parent = FloatingGui
-    btn.Active = true
-    btn.Draggable = true
-
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0,18)
-
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 2.5
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Color = Color3.fromRGB(0,120,255)
-
-    task.spawn(function()
-        while btn.Parent do
-            TweenService:Create(
-                stroke,
-                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                {Color = Color3.fromRGB(0,80,255)}
-            ):Play()
-            task.wait(0.8)
-
-            TweenService:Create(
-                stroke,
-                TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                {Color = Color3.fromRGB(160,230,255)}
-            ):Play()
-            task.wait(0.8)
-        end
-    end)
-
-    btn.MouseButton1Click:Connect(function()
-        shootMurderer()
-    end)
-
-    floatingShootButton = FloatingGui
-end
-
--- =========================
--- ปุ่มใน GunTab
--- =========================
-
-GunTab:Button({
-    Title = "ยิงฆาตกร",
-    Callback = function()
-        shootMurderer()
-    end
-})
-
-GunTab:Button({
-    Title = "ยิงฆาตกร (ปุ่มลอย)",
-    Callback = function()
-        createFloatingShootButton()
-    end
-})
