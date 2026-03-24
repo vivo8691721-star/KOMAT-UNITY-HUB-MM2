@@ -2205,50 +2205,49 @@ end
 -- ยิงฆาตกร  
 -- =========================  
   
-local function shootMurderer()  
-  
-	local char = player.Character  
-	if not char then return end  
-  
-	local gun =  
-	char:FindFirstChild("Gun")  
-	or player.Backpack:FindFirstChild("Gun")  
-  
-	if not gun then return end  
-  
-	if gun.Parent ~= char then  
-		gun.Parent = char  
-	end  
-  
-	local remote = gun:FindFrootild("Shoot")  
-	if not remote then return end  
-  
-	local root = char:FindFirstChild("HumanoidRootPart")  
-	if not root then return end  
-  
-	local attachment = root:FindFirstChild("GunRaycastAttachment")  
-	if not attachment then return end  
-  
-	local murderer = getMurderer()  
-	if not murderer then return end  
-  
-	local mchar = murderer.Character  
-	if not mchar then return end  
-  
-	local mroot = mchar:FindFirstChild("HumanoidRootPart")  
-	if not mroot then return end  
-  
-	-- prediction ยิงนำ  
-	local velocity = mroot.AssemblyLinearVelocity  
-	local predictedPosition =  
-	mroot.Position + velocity * 0.15  
-  
-	remote:FireServer(  
-		attachment.WorldCFrame,  
-		CFrame.new(predictedPosition)  
-	)  
-  
-end  
+local function shootMurderer()
+
+    local char = player.Character
+    if not char then return end
+
+    local gun =
+        char:FindFirstChild("Gun")
+        or player.Backpack:FindFirstChild("Gun")
+
+    if not gun then return end
+
+    if gun.Parent ~= char then
+        gun.Parent = char
+    end
+
+    local remote = gun:FindFirstChild("Shoot")  -- ✅ แก้ตรงนี้
+    if not remote then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local attachment = root:FindFirstChild("GunRaycastAttachment")
+    if not attachment then return end
+
+    local murderer = getMurderer()
+    if not murderer then return end
+
+    local mchar = murderer.Character
+    if not mchar then return end
+
+    local mroot = mchar:FindFirstChild("HumanoidRootPart")
+    if not mroot then return end
+
+    local velocity = mroot.AssemblyLinearVelocity
+    local predictedPosition =
+        mroot.Position + velocity * 0.15
+
+    remote:FireServer(
+        attachment.WorldCFrame,
+        CFrame.new(predictedPosition)
+    )
+
+end
   
 -- =========================  
 -- ปุ่มลอยยิงฆาตกร  
