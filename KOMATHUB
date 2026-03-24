@@ -2695,31 +2695,3 @@ GunTab:Button({
     end
 })
 
--- =========================
--- เมนูหลัก: กันโดนเตะ
--- =========================
-local AntiAFKConnection
-
-SettingsTab:Toggle({
-    Title = "กันโดนเตะ",
-    Default = true, -- เปิดตลอดเวลา
-    Callback = function(state)
-        if state then
-            if not AntiAFKConnection then
-                AntiAFKConnection = player.Idled:Connect(function()
-                    pcall(function()
-                        local VirtualUser = game:GetService("VirtualUser")
-                        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                        task.wait(1)
-                        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                    end)
-                end)
-            end
-        else
-            if AntiAFKConnection then
-                AntiAFKConnection:Disconnect()
-                AntiAFKConnection = nil
-            end
-        end
-    end
-})
