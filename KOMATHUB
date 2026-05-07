@@ -2586,11 +2586,13 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- =========================
--- BUTTONS
+-- AUTO SHOOT BUTTON
 -- =========================
 
+local autoShootWall = false
+
 GunTab:Toggle({
-    Title="ออโต้ยิงฆาตกรทะลุ",
+    Title="ออโต้ยิงฆาตกรทะลุกำแพง",
     Default=false,
     Callback=function(state)
 
