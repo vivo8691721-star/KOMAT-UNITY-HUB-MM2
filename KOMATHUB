@@ -2871,3 +2871,50 @@ MapTab:Toggle({
 
 -- เปิดทำงานอัตโนมัติเลย
 MapTab:GetToggle("กันโดนเตะ"):SetState(true)
+
+-- =========================
+-- SPAWN / GET GUN
+-- =========================
+
+local function findGun()
+
+    for _,v in pairs(workspace:GetDescendants()) do
+
+        if v.Name == "Gun" then
+            return v
+        end
+
+    end
+
+end
+
+GunTab:Button({
+    Title="เสกปืนตอนเป็นนายอำเภอ",
+    Callback=function()
+
+        local gun = findGun()
+
+        if gun then
+
+            -- ถ้าเป็น Tool
+            if gun:IsA("Tool") then
+
+                gun.Parent = player.Backpack
+
+            -- ถ้าเป็น Part หรือ Handle
+            elseif gun:IsA("BasePart") then
+
+                local char = player.Character
+                if not char then return end
+
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+
+                gun.CFrame = root.CFrame
+
+            end
+
+        end
+
+    end
+})
