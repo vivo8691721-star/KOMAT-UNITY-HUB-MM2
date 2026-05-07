@@ -2770,7 +2770,7 @@ MapTab:Toggle({
 MapTab:GetToggle("กันโดนเตะ"):SetState(true)
 
 -- =========================
--- AUTO SHOOT THROUGH WALL
+-- AUTO SHOOT MURDERER THROUGH WALL
 -- =========================
 
 local autoShootWall = false
@@ -2811,7 +2811,7 @@ RunService.RenderStepped:Connect(function()
 
 	if not gun then return end
 
-	-- ถือปืนอัตโนมัติ
+	-- ถือปืนออโต้
 	if gun.Parent ~= char then
 		gun.Parent = char
 	end
@@ -2831,13 +2831,13 @@ RunService.RenderStepped:Connect(function()
 	local mchar = murderer.Character
 	if not mchar then return end
 
-	local mroot = mchar:FindFirstChild("HumanoidRootPart")
-	if not mroot then return end
+	local head = mchar:FindFirstChild("Head")
+	if not head then return end
 
-	-- เดาตำแหน่งล่วงหน้า
-	local velocity = mroot.AssemblyLinearVelocity
+	-- เดาตำแหน่งหัว
+	local velocity = head.AssemblyLinearVelocity
 	local predictedPosition =
-		mroot.Position + velocity * 0.15
+		head.Position + velocity * 0.18
 
 	remote:FireServer(
 		attachment.WorldCFrame,
@@ -2847,13 +2847,13 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- =========================
--- BUTTON
+-- TOGGLE
 -- =========================
 
 GunTab:Toggle({
-	Title="ออโต้ยิงฆาตกรทะลุ",
-	Default=false,
-	Callback=function(state)
+	Title = "ออโต้ยิงฆาตกรทะลุ",
+	Default = false,
+	Callback = function(state)
 
 		autoShootWall = state
 
